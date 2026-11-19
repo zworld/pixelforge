@@ -45,4 +45,25 @@
       'games/neon-survivor/main.js',
     ],
   });
+
+  Studio.registerManifest({
+    id: 'condor-hero',
+    title: '神雕侠侣 · 问情剑',
+    shortTitle: '神雕侠侣',
+    genre: '第一人称 3D 武侠动作',
+    tagline: '扮演杨过亲历古墓、绝情谷、独孤剑冢至襄阳决战 · 断臂前后右手君子剑切换左手玄铁重剑 · 只狼式弹反破防与黯然销魂掌。',
+    icon: '🦅',
+    accent: '#f59e0b',
+    coverBg: 'linear-gradient(135deg, #b45309 0%, #3b0764 48%, #0c192c 100%)',
+    tags: ['第一人称 3D', '弹反破防', '四回原著剧情', '玄铁重剑/黯然掌'],
+    orientationHint: '桌面 FPS / 手机横屏双摇杆',
+    touchProfile: 'none',
+    hasSidebar: false,
+    scripts: [
+      'games/condor-hero/story.js',
+      'games/condor-hero/engine.js',
+      'games/condor-hero/render3d.js',
+      'games/condor-hero/main.js',
+    ],
+  });
 })(typeof window !== 'undefined' ? window : globalThis);

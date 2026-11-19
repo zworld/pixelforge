@@ -43,6 +43,22 @@
       bass: [45, 45, 45, 57, 45, 45, 57, 45, 48, 48, 48, 60, 48, 48, 55, 48,
              41, 41, 41, 53, 41, 41, 53, 41, 43, 43, 43, 55, 43, 43, 55, 43],
     },
+    // 国风五声调式（羽调式 A-C-D-E-G）：古筝/洞箫意境
+    wuxia_calm: {
+      bpm: 96, wave: 'triangle', bassWave: 'sine',
+      lead: [69, 0, 72, 74, 76, 0, 79, 76, 74, 0, 72, 69, 67, 0, 69, 0,
+             76, 0, 79, 81, 79, 0, 76, 74, 72, 74, 76, 72, 69, 0, 0, 0],
+      bass: [45, 0, 0, 52, 45, 0, 0, 52, 43, 0, 0, 50, 45, 0, 43, 0,
+             48, 0, 0, 55, 43, 0, 0, 50, 45, 0, 52, 0, 45, 0, 0, 0],
+    },
+    // 襄阳决战 / Boss 战鼓五声疾奏
+    wuxia_boss: {
+      bpm: 146, wave: 'sawtooth', bassWave: 'triangle',
+      lead: [69, 69, 76, 74, 72, 0, 74, 76, 79, 0, 76, 74, 72, 69, 67, 0,
+             69, 72, 74, 76, 81, 0, 79, 76, 74, 76, 74, 72, 69, 0, 67, 0],
+      bass: [45, 45, 0, 45, 52, 0, 50, 48, 43, 43, 0, 43, 45, 0, 43, 45,
+             45, 45, 0, 48, 50, 0, 48, 45, 43, 43, 45, 48, 45, 0, 43, 0],
+    },
   };
 
   class AudioEngine {
@@ -243,6 +259,55 @@
           case 'boss':
             this.tone('sawtooth', 110, 75, 0.35, 0.12, 0, 650);
             this.tone('sawtooth', 105, 68, 0.35, 0.12, 0.22, 650);
+            break;
+          // ---- 武侠第一人称剑术 / 弹反 / 绝学音效 ----
+          case 'sword_swing': {
+            const heavy = !!ev.heavy;
+            this.noise(heavy ? 0.17 : 0.10, heavy ? 0.15 : 0.10, heavy ? 700 : 1600, heavy ? 140 : 420, 1.1);
+            this.tone('triangle', heavy ? 170 : 340, heavy ? 70 : 140, heavy ? 0.15 : 0.08, heavy ? 0.11 : 0.06);
+            break;
+          }
+          case 'sword_hit': {
+            const heavy = !!ev.heavy || !!ev.crit;
+            this.noise(0.09, heavy ? 0.16 : 0.11, 1400, 320, 1.0);
+            this.tone('sawtooth', heavy ? 280 : 380, heavy ? 85 : 130, 0.10, heavy ? 0.12 : 0.08, 0, 1500);
+            if (ev.crit) this.tone('triangle', 880, 1320, 0.12, 0.09, 0.02);
+            break;
+          }
+          case 'parry':
+            // 只狼 / 燕云式清脆金属高共振弹反音（多泛音叠加）
+            this.tone('triangle', 1560, 1480, 0.24, 0.14);
+            this.tone('sine', 2380, 2240, 0.28, 0.11, 0.005);
+            this.tone('square', 3120, 2950, 0.14, 0.045, 0, 4200);
+            this.noise(0.08, 0.13, 3400, 1400, 2.2);
+            break;
+          case 'guard':
+            this.tone('triangle', 420, 260, 0.12, 0.11);
+            this.tone('square', 780, 520, 0.09, 0.05, 0, 1800);
+            this.noise(0.07, 0.09, 1200, 400, 1.4);
+            break;
+          case 'stagger':
+            // 破防震鸣：深沉金钟 + 碎裂高音
+            this.tone('sawtooth', 165, 82, 0.34, 0.14, 0, 900);
+            this.tone('triangle', 1175, 1760, 0.26, 0.10, 0.02);
+            this.noise(0.16, 0.12, 1800, 420, 1.0);
+            break;
+          case 'peril':
+            // 「危」字红光预警锐鸣
+            this.tone('sawtooth', 880, 620, 0.16, 0.10, 0, 2400);
+            this.tone('sine', 1320, 990, 0.18, 0.08, 0.04);
+            break;
+          case 'chi_wave':
+            // 玉女剑气 / 玄铁剑罡：五声滑音 + 劲风爆发
+            [587, 784, 988, 1175].forEach((f, i) => this.tone('triangle', f, f * 1.04, 0.16, 0.07, i * 0.028));
+            this.noise(0.24, 0.15, 1100, 220, 0.8);
+            this.tone('sawtooth', 210, 65, 0.24, 0.12, 0, 850);
+            break;
+          case 'palm_ult':
+            // 黯然销魂掌：苍茫低鸣 + 惊雷掌印震爆
+            this.noise(0.38, 0.20, 850, 90, 0.65);
+            this.tone('sawtooth', 150, 38, 0.42, 0.16, 0, 680);
+            [440, 523, 659, 880].forEach((f, i) => this.tone('triangle', f, f * 0.96, 0.32, 0.08, i * 0.04));
             break;
           case 'die':
             this.noise(0.22, 0.14, 700, 120, 0.8);

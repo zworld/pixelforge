@@ -516,3 +516,335 @@ body.game-no-status #status { display: none; }
   .win-actions { margin-top: 8px; }
   .win-actions button { padding: 5px 12px; font-size: 12.5px; }
 }
+
+/* ============ Game 3: 神雕侠侣 · 问情剑（国风第一人称 HUD 与触屏武侠键位） ============ */
+.ch-hud {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  user-select: none;
+}
+
+.ch-top-left {
+  position: absolute; left: 16px; top: 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ch-chapter-tag {
+  font-size: 14px; font-weight: 800; letter-spacing: 1px;
+  color: #fde68a;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.65));
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-left: 3px solid #f59e0b;
+  padding: 5px 12px; border-radius: 8px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+.ch-sub-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Boss 顶部血条 + 架势槽 */
+.ch-boss-bar {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  width: min(460px, 52vw);
+  background: rgba(15, 10, 20, 0.78);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: 10px;
+  padding: 7px 14px 9px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+}
+.ch-boss-name {
+  text-align: center; font-size: 14px; font-weight: 800; letter-spacing: 1.5px;
+  color: #fef3c7; margin-bottom: 5px;
+  text-shadow: 0 2px 8px rgba(185, 28, 28, 0.75);
+}
+.ch-boss-hp-track {
+  height: 11px; border-radius: 99px; overflow: hidden;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  margin-bottom: 4px;
+}
+.ch-boss-hp-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #991b1b, #ef4444, #f97316);
+  transition: width 0.08s linear;
+}
+.ch-boss-posture-track {
+  height: 6px; border-radius: 99px; overflow: hidden;
+  background: rgba(15, 23, 42, 0.85);
+}
+.ch-boss-posture-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #f59e0b, #fef08a);
+  transition: width 0.08s linear;
+}
+
+/* 屏幕中央第一人称准星 + 红光「危」/金光「破」+ 方向威胁弧 */
+.ch-center-reticle {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px; height: 64px;
+}
+.ch-reticle-dot {
+  position: absolute; left: 50%; top: 50%;
+  width: 5px; height: 5px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #f8fafc;
+  box-shadow: 0 0 8px rgba(125, 211, 252, 0.9);
+}
+.ch-reticle-ring {
+  position: absolute; left: 50%; top: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(226, 232, 240, 0.45);
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.ch-reticle-ring.locked {
+  border-color: #38bdf8;
+  width: 36px; height: 36px;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.65);
+}
+.ch-reticle-ring.parry {
+  border-color: #fde047;
+  transform: translate(-50%, -50%) scale(1.28);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.9);
+}
+.ch-threat-arc {
+  position: absolute; left: 50%; top: 50%;
+  width: 78px; height: 78px; border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #e2e8f0;
+  opacity: 0.9;
+}
+.ch-threat-arc[data-kind="peril"] { border-top-color: #f43f5e; filter: drop-shadow(0 0 8px #f43f5e); }
+.ch-threat-arc[data-kind="unblock"] { border-top-color: #facc15; filter: drop-shadow(0 0 8px #facc15); }
+
+.ch-peril-kanji {
+  position: absolute; left: 50%; top: -54px; transform: translateX(-50%);
+  font-size: 42px; font-weight: 900; line-height: 1;
+  color: #ff2e55;
+  text-shadow: 0 0 18px rgba(244, 63, 94, 0.95), 0 3px 10px rgba(0, 0, 0, 0.85);
+  animation: chPerilPulse 0.28s infinite alternate;
+}
+.ch-peril-kanji[data-kind="unblock"] {
+  color: #facc15;
+  text-shadow: 0 0 18px rgba(250, 204, 21, 0.95), 0 3px 10px rgba(0, 0, 0, 0.85);
+}
+@keyframes chPerilPulse {
+  from { transform: translateX(-50%) scale(0.95); }
+  to { transform: translateX(-50%) scale(1.14); }
+}
+
+.ch-callout {
+  position: absolute; left: 50%; top: 46px; transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
+  padding: 5px 14px; border-radius: 99px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: #fef08a;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+.ch-callout.crit { color: #fde047; border-color: #f59e0b; background: rgba(120, 53, 15, 0.85); }
+.ch-callout.parry { color: #7dd3fc; border-color: #38bdf8; }
+.ch-callout.peril { color: #fecdd3; border-color: #f43f5e; background: rgba(136, 19, 55, 0.85); }
+.ch-callout.hurt { color: #fda4af; border-color: #ef4444; }
+
+/* 左下角玩家气血/内力/架势 & 武器绝学铭牌 */
+.ch-bottom-left {
+  position: absolute; left: 16px; bottom: 44px;
+  display: flex; flex-direction: column; gap: 6px;
+  width: min(295px, 60vw);
+}
+.ch-weapon-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.ch-weapon-pill, .ch-skill-pill {
+  font-size: 11.5px; font-weight: 700;
+  padding: 4px 9px; border-radius: 8px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+  backdrop-filter: blur(6px);
+}
+.ch-skill-pill.ready {
+  border-color: #fbbf24;
+  color: #fef08a;
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.82), rgba(217, 119, 6, 0.72));
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.45);
+}
+.ch-bars { display: flex; flex-direction: column; gap: 5px; }
+.ch-bar {
+  position: relative; height: 20px; border-radius: 7px; overflow: hidden;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #f8fafc;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+.ch-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transition: width 0.08s linear; }
+.ch-bar span { position: relative; z-index: 1; }
+.ch-bar.hp .ch-bar-fill { background: linear-gradient(90deg, #be123c, #f43f5e); }
+.ch-bar.chi .ch-bar-fill { background: linear-gradient(90deg, #0284c7, #38bdf8, #fde047); }
+.ch-bar.posture { height: 15px; font-size: 10px; }
+.ch-bar.posture .ch-bar-fill { background: linear-gradient(90deg, #d97706, #fbbf24); }
+
+/* 弹反金光闪屏 & Boss 台词条 & 提示条 */
+.ch-parry-flash {
+  position: absolute; inset: 0; pointer-events: none; z-index: 18;
+  background: radial-gradient(circle, rgba(254, 240, 138, 0.18) 0%, rgba(251, 191, 36, 0.42) 100%);
+}
+.ch-boss-quote {
+  position: absolute; top: 96px; left: 50%; transform: translateX(-50%);
+  max-width: min(560px, 88vw);
+  padding: 10px 18px; border-radius: 12px;
+  background: rgba(20, 10, 26, 0.86);
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fef3c7; font-size: 13.5px; line-height: 1.5;
+  z-index: 22; pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+.ch-bq-speaker { color: #fbbf24; font-weight: 800; }
+.ch-tip {
+  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+  padding: 6px 14px; border-radius: 99px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #cbd5e1; font-size: 12px; white-space: nowrap;
+  max-width: 92vw; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none; z-index: 14;
+}
+
+/* 国风原著剧情对话卷轴 */
+.ch-story-modal {
+  position: absolute; inset: 0; z-index: 32;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 20px 16px 34px;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.12) 0%, rgba(2, 6, 23, 0.72) 100%);
+}
+.ch-story-card {
+  width: min(640px, 94vw);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(10, 15, 30, 0.96));
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  border-top: 3px solid #f59e0b;
+  border-radius: 16px;
+  padding: 18px 22px;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.72);
+}
+.ch-story-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.ch-story-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+  background: rgba(251, 191, 36, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+}
+.ch-story-speaker { font-size: 16px; font-weight: 800; color: #fde68a; }
+.ch-story-loc { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.ch-story-text {
+  font-size: 15px; line-height: 1.72; color: #f1f5f9;
+  min-height: 50px; margin-bottom: 14px;
+}
+.ch-story-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.ch-win-card { max-width: 480px; }
+.ch-win-epilogue {
+  font-size: 13px; line-height: 1.65; color: #fde68a;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 12px;
+}
+
+/* 移动端第一人称武侠 4 键触屏布局（左摇杆 + 右四键动作弧） */
+.ch-touch {
+  position: absolute; inset: 0; pointer-events: none; z-index: 20;
+  touch-action: none; user-select: none;
+}
+.ch-stick {
+  position: absolute;
+  left: max(20px, env(safe-area-inset-left));
+  bottom: max(22px, env(safe-area-inset-bottom));
+  width: 114px; height: 114px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(15, 23, 42, 0.30) 0%, rgba(15, 23, 42, 0.62) 100%);
+  border: 2px solid rgba(251, 191, 36, 0.45);
+  pointer-events: auto;
+  display: flex; align-items: center; justify-content: center;
+}
+.ch-stick-knob {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fef08a, #d97706);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5);
+  pointer-events: none;
+}
+.ch-touch-right {
+  position: absolute;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: 196px; height: 184px;
+  pointer-events: none;
+}
+.ch-tbtn {
+  position: absolute; pointer-events: auto;
+  border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #f8fafc;
+  background: rgba(15, 23, 42, 0.72);
+  border: 2px solid rgba(148, 163, 184, 0.55);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  padding: 0;
+}
+.ch-tbtn.pressed { transform: scale(0.92); filter: brightness(1.25); }
+.ch-tbtn.atk {
+  right: 0; bottom: 0; width: 80px; height: 80px; font-size: 14px;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(153, 27, 27, 0.88));
+  border-color: #fca5a5;
+}
+.ch-tbtn.parry {
+  right: 92px; bottom: 8px; width: 66px; height: 66px;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.82), rgba(30, 58, 138, 0.88));
+  border-color: #7dd3fc;
+}
+.ch-tbtn.dodge {
+  right: 84px; bottom: 86px; width: 62px; height: 62px;
+  background: rgba(30, 41, 59, 0.82);
+  border-color: #cbd5e1;
+}
+.ch-tbtn.skill {
+  right: 6px; bottom: 92px; width: 66px; height: 66px;
+  background: rgba(51, 65, 85, 0.78);
+  border-color: #94a3b8;
+}
+.ch-tbtn.skill.ready {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.92), rgba(180, 83, 9, 0.92));
+  border-color: #fef08a;
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.75);
+}
+.ch-tbtn.lock {
+  right: 146px; bottom: 130px; width: 54px; height: 34px; border-radius: 99px;
+  font-size: 11px;
+}
+.ch-tbtn.lock.active { border-color: #38bdf8; color: #7dd3fc; background: rgba(14, 116, 144, 0.85); }
+
+/* 手机竖屏微调 */
+@media (max-width: 860px) and (orientation: portrait) {
+  .ch-top-left { left: 10px; top: 10px; }
+  .ch-chapter-tag { font-size: 12px; padding: 4px 9px; }
+  .ch-boss-bar { top: 68px; width: 88vw; padding: 5px 10px 7px; }
+  .ch-bottom-left { left: 10px; bottom: 186px; width: 52vw; }
+  .ch-tbtn.lock { right: 12px; bottom: 168px; }
+  .ch-tip { display: none; }
+}
+
+/* 手机横屏全屏掌机微调 */
+@media (max-height: 540px) and (orientation: landscape) {
+  .float-play-bar button.active { color: #ffffff; border-color: #7dd3fc; }
+  .ch-top-left { left: max(12px, env(safe-area-inset-left)); top: max(8px, env(safe-area-inset-top)); gap: 4px; }
+  .ch-chapter-tag { font-size: 11.5px; padding: 3px 8px; }
+  .ch-boss-bar { top: max(8px, env(safe-area-inset-top)); width: min(340px, 42vw); padding: 4px 10px 6px; }
+  .ch-boss-name { font-size: 12px; margin-bottom: 3px; }
+  .ch-bottom-left { left: max(136px, calc(126px + env(safe-area-inset-left))); bottom: max(12px, env(safe-area-inset-bottom)); width: 220px; }
+  .ch-bar { height: 16px; font-size: 10px; }
+  .ch-weapon-pill, .ch-skill-pill { font-size: 10px; padding: 2px 6px; }
+  .ch-tip { display: none; }
+  .ch-stick { width: 98px; height: 98px; bottom: max(12px, env(safe-area-inset-bottom)); }
+  .ch-touch-right { transform: scale(0.86); transform-origin: bottom right; bottom: max(10px, env(safe-area-inset-bottom)); }
+  .ch-story-modal { padding: 12px 16px 14px; }
+  .ch-story-card { padding: 12px 16px; }
+  .ch-story-text { font-size: 13.5px; min-height: 36px; margin-bottom: 10px; }
+}
