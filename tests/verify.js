@@ -235,7 +235,10 @@ for (const p of PF.PRESETS) {
   ok(PF.get(L, 5, 6) === 'I' && PF.get(L, 8, 7) === 'I', '3D 编辑器矩形框选批量填充（4×2 冰块）生效');
   ed.undo();
   ok(PF.get(L, 5, 6) === '.' && PF.get(L, 8, 7) === '.', '矩形填充单次撤销完整还原');
+  ed.setTile(10, 5, 'B');
+  ed.cancelStroke();
+  ok(PF.get(L, 10, 5) === '.', '移动端双指缩放防误触：cancelStroke 静默回滚未提交单指误触');
 }
 
-console.log(failed ? `\n${failed} 项失败` : '\n🎉 全部 29 项验收通过！');
+console.log(failed ? `\n${failed} 项失败` : '\n🎉 全部 30 项验收通过！');
 process.exit(failed ? 1 : 0);

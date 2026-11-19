@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
   <title>PixelForge · 3D 关卡工坊</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -14,6 +17,7 @@
       <button id="btnPlay" class="primary" title="试玩 (P)，Shift+P 从光标处试玩">▶ 试玩</button>
       <button id="btnBrush" class="toggle active" title="自由画笔 (B)">✏️ 画笔</button>
       <button id="btnRect" class="toggle" title="矩形框选填充 (B)">▭ 框选</button>
+      <button id="btnHand" class="toggle" title="单指拖动平移画布 (H)，移动端也可双指平移缩放">✋ 平移</button>
       <button id="btnUndo" title="撤销 (⌘/Ctrl+Z)">↶ 撤销</button>
       <button id="btnRedo" title="重做 (⌘/Ctrl+Shift+Z)">↷ 重做</button>
       <span class="sep"></span>
@@ -43,8 +47,9 @@
     </div>
 
     <div class="group hidden" id="playTools">
-      <button id="btnStop" class="primary">■ 返回编辑 (Esc)</button>
-      <button id="btnRestart">↻ 从头重来 (R)</button>
+      <button id="btnStop" class="primary">■ 编辑</button>
+      <button id="btnRestart">↻ 重来</button>
+      <button id="btnTouchToggle" class="toggle" title="开关虚拟触屏手柄">🎮 触屏键</button>
       <span id="playModeBadge" class="badge hidden">🤖 AI 自动演示中</span>
     </div>
 
@@ -67,6 +72,29 @@
 
       <div id="playTip" class="hidden">
         ←→/AD 移动 · 空格/↑ 跳跃（贴墙可蹬墙跳） · <b>Shift/X/J</b> 八向冲刺（可破砖/撞开关）
+      </div>
+
+      <!-- 移动端多点触控虚拟手柄（左侧八向摇杆 + 右侧跳/冲双键） -->
+      <div id="touchControls" class="hidden" aria-label="触屏控制">
+        <div id="touchStick" class="touch-stick">
+          <div class="stick-arrows">
+            <span class="arr-u">▲</span>
+            <span class="arr-d">▼</span>
+            <span class="arr-l">◀</span>
+            <span class="arr-r">▶</span>
+          </div>
+          <div id="touchKnob" class="touch-knob"></div>
+        </div>
+        <div class="touch-actions">
+          <button id="btnTouchDash" class="touch-btn touch-dash" type="button">
+            <span class="tb-icon">⚡</span>
+            <span class="tb-label">冲刺</span>
+          </button>
+          <button id="btnTouchJump" class="touch-btn touch-jump" type="button">
+            <span class="tb-icon">⬆</span>
+            <span class="tb-label">跳跃</span>
+          </button>
+        </div>
       </div>
 
       <div id="winOverlay" class="hidden">

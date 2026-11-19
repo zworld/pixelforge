@@ -1,4 +1,4 @@
-/* PixelForge — 应用主程序：3D 编排、微顿帧/残影 Juice、幽灵竞速、异步 AI 验关与自动演示、主题与持久化 */
+/* PixelForge — 应用主程序：3D 编排、移动端多点触控手柄、微顿帧/残影 Juice、幽灵竞速、异步 AI 验关与主题持久化 */
 (function () {
   'use strict';
   const PF = window.PF;
@@ -6,6 +6,11 @@
   const $ = (id) => document.getElementById(id);
   const STORE_KEY = 'pixelforge.level.v2';
   const PB_KEY = 'pixelforge.pbs.v1';
+
+  const detectTouchDevice = () =>
+    (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+    navigator.maxTouchPoints > 0 ||
+    window.innerWidth <= 860;
 
   const app = {
     level: null,
@@ -18,6 +23,9 @@
     particles: [],
     afterimages: [],
     keys: {},
+    touchInput: { left: false, right: false, up: false, down: false, jump: false, dash: false },
+    touchEnabled: detectTouchDevice(),
+    touchManual: false,
     t: 0,
     deaths: 0,
     deadTimer: 0,
@@ -28,16 +36,16 @@
     switchFlashTimer: 0,
     // 轨迹与幽灵竞速
     showTrail: true,
-    playTrail: null, // { points: [{x,y}], diedAt: {x,y}|null }
+    playTrail: null,
     runRecording: [],
-    ghostCache: {},  // levelCode -> { time, frames: [[px,py,facing],...] }
+    ghostCache: {},
     activeGhost: null,
     pbStore: {},
     lastWinRecord: null,
     // AI 验关与演示
     aiTask: null,
-    aiSolution: null, // { code, result }
-    aiPlayback: null, // { path, hold, stepIdx, frameInHold }
+    aiSolution: null,
+    aiPlayback: null,
 
     init() {
       this.loadPBs();
@@ -52,8 +60,29 @@
       this.syncToolButtons();
       this.fitView();
       this.bindUI();
+      this.bindTouchControls();
       this.updateStatus();
-      window.addEventListener('resize', () => { this.renderer.resize(); });
+
+      const onResize = () => {
+        this.renderer.resize();
+        if (!this.touchManual) {
+          this.touchEnabled = detectTouchDevice();
+          this.syncToolButtons();
+        }
+        if (this.mode === 'play' && this.game) this.applyPlayCameraDist();
+        this.updateStatus();
+      };
+      window.addEventListener('resize', onResize);
+      window.addEventListener('orientationchange', () => setTimeout(onResize, 120));
+
+      // iOS / 移动端首次触摸解锁 WebAudio 上下文
+      const unlockAudio = () => {
+        PF.Audio.ensure();
+        window.removeEventListener('pointerdown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
+      window.addEventListener('pointerdown', unlockAudio, { passive: true });
+      window.addEventListener('touchstart', unlockAudio, { passive: true });
 
       let last = performance.now(), acc = 0;
       const frame = (now) => {
@@ -81,6 +110,12 @@
       requestAnimationFrame(frame);
     },
 
+    haptic(ms) {
+      if (this.touchEnabled && navigator.vibrate) {
+        try { navigator.vibrate(ms); } catch (e) { /* ignore */ }
+      }
+    },
+
     markDirty() {
       if (this.renderer) this.renderer.dirty = true;
     },
@@ -99,7 +134,11 @@
       const m = location.hash.match(/[#&]L=([\w-]+)/);
       if (m) {
         const lv = PF.decode(m[1]);
-        if (lv) { this.level = lv; this.toast('已从分享链接载入 3D 关卡 🎉'); return; }
+        if (lv) {
+          this.level = lv;
+          this.toast(this.touchEnabled ? '已载入分享关卡！点「▶ 试玩」立即开玩 🎉' : '已从分享链接载入 3D 关卡 🎉');
+          return;
+        }
         this.toast('分享链接无效，已载入本地关卡');
       }
       const saved = localStorage.getItem(STORE_KEY) || localStorage.getItem('pixelforge.level.v1');
@@ -115,8 +154,28 @@
     syncToolButtons() {
       $('btnBrush').classList.toggle('active', this.editor.paintMode === 'brush');
       $('btnRect').classList.toggle('active', this.editor.paintMode === 'rect');
+      $('btnHand').classList.toggle('active', this.editor.paintMode === 'hand');
       $('btnTrail').classList.toggle('active', this.showTrail);
       $('btnBgm').classList.toggle('active', PF.Audio.bgmOn);
+      $('btnTouchToggle').classList.toggle('active', this.touchEnabled);
+      this.syncTouchVisibility();
+    },
+
+    syncTouchVisibility() {
+      const show = this.mode === 'play' && this.touchEnabled && !this.aiPlayback;
+      $('touchControls').classList.toggle('hidden', !show);
+      $('playTip').innerHTML = this.touchEnabled
+        ? '左摇杆移动/瞄准 · <b>⬆ 跳跃</b>（贴墙可蹬墙跳）· <b>⚡ 冲刺</b>（可破砖/撞开关）'
+        : '←→/AD 移动 · 空格/↑ 跳跃（贴墙可蹬墙跳） · <b>Shift/X/J</b> 八向冲刺（可破砖/撞开关）';
+    },
+
+    resetTouchInput() {
+      const ti = this.touchInput;
+      ti.left = ti.right = ti.up = ti.down = ti.jump = ti.dash = false;
+      const knob = $('touchKnob');
+      if (knob) knob.style.transform = 'translate(-50%, -50%)';
+      $('btnTouchJump').classList.remove('pressed');
+      $('btnTouchDash').classList.remove('pressed');
     },
 
     invalidateAI() {
@@ -146,9 +205,11 @@
       const r = this.renderer;
       const L = this.level;
       const tanHalf = Math.tan((r.camera.fov * Math.PI) / 360);
-      const aspect = Math.max(0.5, r.w / r.h);
+      const aspect = Math.max(0.45, r.w / r.h);
       const distH = (L.h + 3.5) / (2 * tanHalf);
-      const distW = Math.min(L.w + 2, 22) / (2 * tanHalf * aspect);
+      // 竖屏手机避免拉得太远导致方块过小：横向至少展示 14 格、桌面展示 22 格
+      const minCols = aspect < 0.85 ? Math.min(L.w + 1, 14.5) : Math.min(L.w + 2, 22);
+      const distW = minCols / (2 * tanHalf * aspect);
       this.cam.dist = Math.max(10, Math.min(80, Math.max(distH, distW)));
       this.cam.yaw = -0.14;
       this.cam.pitch = 0.14;
@@ -158,6 +219,16 @@
       const px = p ? p.x : 2;
       this.cam.tx = Math.min(L.w / 2, Math.max(vis.w * 0.44, px + vis.w * 0.32));
       this.updateStatus();
+    },
+
+    applyPlayCameraDist() {
+      const r = this.renderer;
+      const tanHalf = Math.tan((r.camera.fov * Math.PI) / 360);
+      const aspect = Math.max(0.45, r.w / r.h);
+      const distH = Math.min(this.level.h + 2, 17) / (2 * tanHalf);
+      // 手机竖屏保证水平至少可见 14 格，提前看清前方尖刺与深渊
+      const distW = aspect < 0.85 ? 14.5 / (2 * tanHalf * aspect) : 0;
+      this.cam.dist = Math.max(12, Math.min(42, Math.max(distH, distW)));
     },
 
     // ---- 试玩 & AI 演示 ----
@@ -184,6 +255,7 @@
       this.deaths = 0;
       this.currentLevelCode = PF.encode(L);
       this.activeGhost = (!fromCursor && !aiDemo) ? (this.ghostCache[this.currentLevelCode] || null) : null;
+      this.resetTouchInput();
 
       $('editTools').classList.add('hidden');
       $('playTools').classList.remove('hidden');
@@ -191,6 +263,7 @@
       $('hud').classList.remove('hidden');
       $('playModeBadge').classList.toggle('hidden', !aiDemo);
       document.body.classList.add('playing');
+      this.syncTouchVisibility();
       this.renderer.resize();
       this.resetGame(true);
       this.canvas.focus();
@@ -210,16 +283,10 @@
       this.afterimages = [];
       this.runRecording = [];
       this.lastWinRecord = null;
-      if (!this.aiPlayback) {
-        this.playTrail = { points: [], diedAt: null };
-      }
-      if (this.aiPlayback) {
-        this.aiPlayback.stepIdx = 0;
-        this.aiPlayback.frameInHold = 0;
-      }
+      if (!this.aiPlayback) this.playTrail = { points: [], diedAt: null };
+      if (this.aiPlayback) { this.aiPlayback.stepIdx = 0; this.aiPlayback.frameInHold = 0; }
       this.markDirty();
-      const tanHalf = Math.tan((this.renderer.camera.fov * Math.PI) / 360);
-      this.cam.dist = Math.max(12, Math.min(36, Math.min(this.level.h + 2, 17) / (2 * tanHalf)));
+      this.applyPlayCameraDist();
       this.cam.yaw = -0.10;
       this.cam.pitch = 0.12;
       this.followCamera(true);
@@ -232,6 +299,7 @@
       this.game = null;
       this.aiPlayback = null;
       this.activeCheckpoint = null;
+      this.resetTouchInput();
       PF.Audio.stopBgm();
       $('editTools').classList.remove('hidden');
       $('playTools').classList.add('hidden');
@@ -242,6 +310,7 @@
       $('deadFlash').classList.add('hidden');
       $('switchFlash').classList.add('hidden');
       $('playModeBadge').classList.add('hidden');
+      $('touchControls').classList.add('hidden');
       document.body.classList.remove('playing');
       this.renderer.resize();
       if (this.editCam) this.cam = { ...this.editCam };
@@ -260,15 +329,15 @@
         return a;
       }
       const k = this.keys;
+      const ti = this.touchInput;
       const inp = {
-        left: !!(k.ArrowLeft || k.KeyA),
-        right: !!(k.ArrowRight || k.KeyD),
-        up: !!(k.ArrowUp || k.KeyW),
-        down: !!(k.ArrowDown || k.KeyS),
-        jump: !!(k.Space || k.ArrowUp || k.KeyW || k.KeyZ || k.KeyK),
-        dash: !!(k.ShiftLeft || k.ShiftRight || k.KeyX || k.KeyJ || k.KeyL),
+        left: !!(k.ArrowLeft || k.KeyA || ti.left),
+        right: !!(k.ArrowRight || k.KeyD || ti.right),
+        up: !!(k.ArrowUp || k.KeyW || ti.up),
+        down: !!(k.ArrowDown || k.KeyS || ti.down),
+        jump: !!(k.Space || k.ArrowUp || k.KeyW || k.KeyZ || k.KeyK || ti.jump),
+        dash: !!(k.ShiftLeft || k.ShiftRight || k.KeyX || k.KeyJ || k.KeyL || ti.dash),
       };
-      // 原生手柄支持（Xbox / Switch / PS）
       const pads = navigator.getGamepads ? navigator.getGamepads() : [];
       const pad = pads && pads[0];
       if (pad) {
@@ -295,24 +364,19 @@
       PF.step(this.level, g, this.input());
       for (const ev of g.events) this.onEvent(ev);
 
-      // 冲刺残影（每 2 帧生成 1 个 3D 半透明残影）
       if (g.dashTimer > 0 && this.frameCount % 2 === 0) {
         this.afterimages.unshift({
           x: (g.px + 6) / T,
           y: -(g.py + 14) / T,
           facing: g.facing,
-          life: 0.24,
-          max: 0.24,
-          color: '#38bdf8',
+          life: 0.24, max: 0.24, color: '#38bdf8',
         });
         if (this.afterimages.length > 9) this.afterimages.pop();
       }
-      // 贴墙慢滑微尘
       if (g.wallDir !== 0 && this.frameCount % 5 === 0) {
         this.particles.push({
           x: g.wallDir > 0 ? g.px + 12 : g.px,
-          y: g.py + 8,
-          z: 0,
+          y: g.py + 8, z: 0,
           vx: -g.wallDir * (12 + Math.random() * 18),
           vy: -10 - Math.random() * 15,
           vz: (Math.random() - 0.5) * 1.5,
@@ -320,7 +384,6 @@
         });
       }
 
-      // 录制试玩轨迹 & 幽灵竞速帧
       if (!this.aiPlayback) {
         if (this.frameCount % 3 === 0 && this.playTrail) {
           this.playTrail.points.push({ x: (g.px + 6) / T, y: -(g.py + 7) / T });
@@ -357,16 +420,19 @@
           break;
         case 'walljump':
           burst(9, '#bae6fd', 85, 0.32, 120);
+          this.haptic(8);
           break;
         case 'dash':
           burst(16, ['#38bdf8', '#e0f2fe', '#7dd3fc'], 140, 0.36, 0);
           this.hitstop = Math.max(this.hitstop, 0.032);
           this.shake = Math.max(this.shake, 0.14);
+          this.haptic(12);
           break;
         case 'wavedash':
           burst(22, ['#38bdf8', '#facc15', '#ffffff'], 175, 0.44, 60);
           this.hitstop = Math.max(this.hitstop, 0.04);
           this.shake = Math.max(this.shake, 0.18);
+          this.haptic(16);
           break;
         case 'coin':
           burst(10, ['#fde047', '#ffffff'], 100, 0.42, 0);
@@ -375,12 +441,14 @@
           burst(18, ['#34d399', '#6ee7b7', '#ffffff'], 135, 0.48, 0);
           this.hitstop = Math.max(this.hitstop, 0.042);
           this.shake = Math.max(this.shake, 0.12);
+          this.haptic(10);
           break;
         case 'switch':
           burst(20, ev.on ? ['#ef4444', '#fca5a5'] : ['#3b82f6', '#93c5fd'], 160, 0.5, 80);
           this.hitstop = Math.max(this.hitstop, 0.036);
           this.shake = Math.max(this.shake, 0.15);
           this.switchFlashTimer = 0.18;
+          this.haptic(12);
           $('switchFlash').style.background = ev.on ? 'rgba(239, 68, 68, 0.16)' : 'rgba(59, 130, 246, 0.18)';
           $('switchFlash').classList.remove('hidden');
           break;
@@ -390,29 +458,35 @@
         case 'checkpoint':
           this.activeCheckpoint = { x: this.game.checkpoint.x, y: this.game.checkpoint.y };
           burst(26, ['#38bdf8', '#fde047', '#ffffff'], 165, 0.72, 120);
+          this.haptic(14);
           this.toast('🚩 存档点已激活！');
           break;
         case 'stomp':
           burst(14, ['#a78bfa', '#ffffff'], 135, 0.48, 220);
           this.hitstop = Math.max(this.hitstop, 0.045);
           this.shake = Math.max(this.shake, 0.14);
+          this.haptic(12);
           break;
         case 'break':
           burst(18, ['#c8642c', '#e8915a', '#7a3412'], 175, 0.68, 700);
           this.hitstop = Math.max(this.hitstop, 0.042);
           this.shake = Math.max(this.shake, 0.13);
+          this.haptic(10);
           break;
         case 'spring':
           burst(10, ['#ff8a80', '#fde047'], 80, 0.34, 0);
+          this.haptic(10);
           break;
         case 'die':
           burst(32, ['#2f80ed', '#38bdf8', '#ffffff'], 220, 0.78, 500);
           this.hitstop = Math.max(this.hitstop, 0.068);
           this.shake = Math.max(this.shake, 0.32);
+          this.haptic(26);
           if (this.playTrail) this.playTrail.diedAt = { x: ev.x / T, y: -ev.y / T };
           break;
         case 'win':
           burst(60, ['#22c55e', '#facc15', '#38bdf8', '#f472b6'], 240, 1.5, 200);
+          this.haptic(20);
           this.handleWin();
           break;
       }
@@ -464,7 +538,9 @@
       const px = (g.px + 6) / T;
       const py = -(g.py + 7) / T;
       let tx = px + g.facing * Math.min(2.6, vis.w * 0.085);
-      let ty = py + vis.h * 0.05;
+      // 手机端触屏手柄位于底部，画面焦点略微下偏使主角居于中上部视野更开阔
+      const yBias = this.touchEnabled ? -vis.h * 0.04 : vis.h * 0.05;
+      let ty = py + yBias;
       const halfW = Math.min(L.w / 2, vis.w * 0.44);
       const halfH = Math.min(L.h / 2, vis.h * 0.44);
       tx = Math.max(halfW, Math.min(L.w - halfW, tx));
@@ -482,6 +558,7 @@
       $('hudDeaths').textContent = `💀 ${this.deaths}`;
 
       const dashEl = $('hudDash');
+      const dashReady = g.dashes > 0 || g.dashTimer > 0;
       if (g.dashTimer > 0) {
         dashEl.textContent = '⚡ 冲刺中!';
         dashEl.className = 'hud-pill dash-ready';
@@ -492,6 +569,7 @@
         dashEl.textContent = '⚡ 充能中';
         dashEl.className = 'hud-pill dash-spent';
       }
+      $('btnTouchDash').classList.toggle('spent', !dashReady);
 
       const hasSwitch = this.level.tiles.includes('T') || this.level.tiles.includes('R') || this.level.tiles.includes('U');
       const swEl = $('hudSwitch');
@@ -522,6 +600,96 @@
       const flash = $('deadFlash');
       flash.classList.toggle('hidden', !g.dead);
       if (g.dead) flash.style.opacity = String(Math.max(0, 1 - this.deadTimer / 0.65));
+    },
+
+    // ---- 移动端多点触控虚拟手柄 ----
+    bindTouchControls() {
+      const stick = $('touchStick');
+      const knob = $('touchKnob');
+      const btnJump = $('btnTouchJump');
+      const btnDash = $('btnTouchDash');
+      let stickPid = null;
+
+      const updateStick = (clientX, clientY) => {
+        const rect = stick.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const maxR = rect.width * 0.34;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        const clamped = Math.min(dist, maxR);
+        const angle = Math.atan2(dy, dx);
+        const kx = dist > 0 ? Math.cos(angle) * clamped : 0;
+        const ky = dist > 0 ? Math.sin(angle) * clamped : 0;
+        knob.style.transform = `translate(calc(-50% + ${kx.toFixed(1)}px), calc(-50% + ${ky.toFixed(1)}px))`;
+
+        const nx = dx / maxR;
+        const ny = dy / maxR;
+        const dead = 0.24;
+        this.touchInput.left = nx < -dead;
+        this.touchInput.right = nx > dead;
+        this.touchInput.up = ny < -0.45;
+        this.touchInput.down = ny > 0.45;
+      };
+
+      const releaseStick = () => {
+        stickPid = null;
+        this.touchInput.left = this.touchInput.right = this.touchInput.up = this.touchInput.down = false;
+        knob.style.transform = 'translate(-50%, -50%)';
+      };
+
+      const takeoverAi = () => {
+        if (this.aiPlayback) {
+          this.aiPlayback = null;
+          $('playModeBadge').classList.add('hidden');
+          this.syncTouchVisibility();
+          this.toast('已切换为手动接管！');
+        }
+      };
+
+      stick.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        takeoverAi();
+        stickPid = e.pointerId;
+        try { stick.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        updateStick(e.clientX, e.clientY);
+      });
+      stick.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== stickPid) return;
+        e.preventDefault();
+        updateStick(e.clientX, e.clientY);
+      });
+      const endStick = (e) => { if (stickPid !== null && (e.pointerId === stickPid || e.type === 'lostpointercapture')) releaseStick(); };
+      stick.addEventListener('pointerup', endStick);
+      stick.addEventListener('pointercancel', endStick);
+      stick.addEventListener('lostpointercapture', endStick);
+      window.addEventListener('pointerup', endStick);
+
+      const bindActionBtn = (el, key) => {
+        const pids = new Set();
+        el.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          takeoverAi();
+          pids.add(e.pointerId);
+          try { el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+          this.touchInput[key] = true;
+          el.classList.add('pressed');
+        });
+        const release = (e) => {
+          if (e.type === 'lostpointercapture') pids.clear();
+          else pids.delete(e.pointerId);
+          if (pids.size === 0) {
+            this.touchInput[key] = false;
+            el.classList.remove('pressed');
+          }
+        };
+        el.addEventListener('pointerup', release);
+        el.addEventListener('pointercancel', release);
+        el.addEventListener('lostpointercapture', release);
+      };
+      bindActionBtn(btnJump, 'jump');
+      bindActionBtn(btnDash, 'dash');
     },
 
     // ---- 异步浏览器内 AI 验关 ----
@@ -619,11 +787,16 @@
         s = `${modeTag} · 主题：${th.icon} ${th.name} · 初始化 ${initMs}ms · Shift/X 冲刺 · 贴墙可蹬墙跳 · Esc 返回编辑`;
       } else {
         const tool = this.editor.tool === '.' ? '橡皮擦' : PF.TILES[this.editor.tool].name;
-        const pMode = this.editor.paintMode === 'rect' ? '矩形框选' : '自由画笔';
+        const pMode = this.editor.paintMode === 'rect' ? '矩形框选' : (this.editor.paintMode === 'hand' ? '抓手平移' : '自由画笔');
         const h = this.editor.hover;
         const pos = h && PF.inBounds(L, h.x, h.y) ? `(${h.x}, ${h.y})` : '—';
         const zoomPct = Math.round((24 / this.cam.dist) * 100);
-        s = `模式：${pMode} · 工具：${tool} · 光标 ${pos} · 关卡 ${L.w}×${L.h} · 主题 ${th.icon}${th.name} · 缩放 ${zoomPct}% · 已自动保存`;
+        if (window.innerWidth <= 500) {
+          s = `${pMode} · ${tool} · ${th.icon} · ${L.w}×${L.h} · ${zoomPct}% · 双指缩放`;
+        } else {
+          const hint = window.innerWidth <= 860 ? '双指缩放平移' : `光标 ${pos}`;
+          s = `${pMode} · ${tool} · ${hint} · ${L.w}×${L.h} · ${th.icon}${th.name} · ${zoomPct}% · 已自动保存`;
+        }
       }
       $('status').textContent = s;
     },
@@ -645,6 +818,7 @@
       $('btnWinEdit').onclick = () => this.stop();
       $('btnBrush').onclick = () => this.editor.setPaintMode('brush');
       $('btnRect').onclick = () => this.editor.setPaintMode('rect');
+      $('btnHand').onclick = () => this.editor.setPaintMode(this.editor.paintMode === 'hand' ? 'brush' : 'hand');
       $('btnUndo').onclick = () => this.editor.undo();
       $('btnRedo').onclick = () => this.editor.redo();
       $('btnAiCheck').onclick = () => this.startAiCheck();
@@ -655,6 +829,13 @@
         this.showTrail = !this.showTrail;
         this.syncToolButtons();
         this.toast(this.showTrail ? '已开启试玩轨迹辅助线' : '已隐藏试玩轨迹');
+      };
+      $('btnTouchToggle').onclick = () => {
+        this.touchManual = true;
+        this.touchEnabled = !this.touchEnabled;
+        this.resetTouchInput();
+        this.syncToolButtons();
+        this.toast(this.touchEnabled ? '🎮 虚拟触屏手柄已开启' : '🎮 虚拟触屏手柄已隐藏');
       };
       $('btnBgm').onclick = () => {
         const on = PF.Audio.toggleBgm(this.mode === 'play', this.level.theme || 'meadow');
@@ -683,7 +864,11 @@
         const url = this.shareURL();
         history.replaceState(null, '', url);
         const ok = await this.copy(url);
-        this.toast(ok ? `分享链接已复制（${url.length} 字符，含主题与机关）` : '复制失败，请手动复制地址栏');
+        if (ok) return this.toast(`分享链接已复制（${url.length} 字符）`);
+        if (navigator.share) {
+          try { await navigator.share({ title: 'PixelForge 3D 关卡', url }); return; } catch (e) { /* cancel */ }
+        }
+        this.toast('复制失败，请手动复制地址栏');
       };
       $('btnExport').onclick = () => {
         const data = JSON.stringify({ format: 'pixelforge', version: 2, theme: this.level.theme || 'meadow', w: this.level.w, h: this.level.h, code: PF.encode(this.level) }, null, 2);
@@ -737,10 +922,10 @@
             this.resetGame(true);
             return;
           }
-          // AI 演示中按移动键直接接管操作
           if (this.aiPlayback && ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
             this.aiPlayback = null;
             $('playModeBadge').classList.add('hidden');
+            this.syncTouchVisibility();
             this.toast('已切换为手动接管！');
           }
           this.keys[e.code] = true;
@@ -750,7 +935,7 @@
         this.editor.keydown(e);
       });
       window.addEventListener('keyup', (e) => { this.keys[e.code] = false; this.editor.keyup(e); });
-      window.addEventListener('blur', () => { this.keys = {}; });
+      window.addEventListener('blur', () => { this.keys = {}; this.resetTouchInput(); });
       window.addEventListener('hashchange', () => {
         const m = location.hash.match(/[#&]L=([\w-]+)/);
         const lv = m && PF.decode(m[1]);

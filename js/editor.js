@@ -1,4 +1,4 @@
-/* PixelForge — 3D 关卡编辑器（分组调色板、画笔/矩形框选填充、射线拾取、3D 镜头操控、完整撤销栈） */
+/* PixelForge — 3D 关卡编辑器（支持桌面键鼠 + 移动端多点触控双指缩放/平移/防误触撤销、画笔/矩形框选/抓手模式） */
 (function (G) {
   'use strict';
   const PF = G.PF;
@@ -13,7 +13,7 @@
     constructor(app) {
       this.app = app;
       this.tool = '#';
-      this.paintMode = 'brush'; // 'brush' | 'rect'
+      this.paintMode = 'brush'; // 'brush' | 'rect' | 'hand'
       this.undoStack = [];
       this.redoStack = [];
       this.stroke = null; // Map idx -> [before, after]
@@ -21,6 +21,9 @@
       this.rectDrag = null; // { x0, y0, x1, y1, ch }
       this.hover = null;
       this.pan = null;
+      this.pinch = null;
+      this.pinchCooldown = false;
+      this.pointers = new Map(); // pointerId -> { x, y }
       this.space = false;
     }
 
@@ -51,7 +54,10 @@
           if (it.key) {
             const k = document.createElement('kbd'); k.textContent = it.key; b.appendChild(k);
           }
-          b.onclick = () => this.setTool(it.ch);
+          b.onclick = () => {
+            this.setTool(it.ch);
+            if (this.paintMode === 'hand') this.setPaintMode('brush');
+          };
           grid.appendChild(b);
           this.buttons[it.ch] = b;
         }
@@ -62,9 +68,9 @@
       help.className = 'help';
       help.innerHTML =
         `<b>左键</b> 绘制 · <b>右键</b> 擦除<br>` +
-        `<b>B</b> 画笔/矩形框选 · <b>Alt</b> 吸取<br>` +
+        `<b>B</b> 画笔/框选 · <b>H</b> 抓手平移<br>` +
         `<b>空格/中键</b> 平移 · <b>Q/E</b> 转视角<br>` +
-        `<b>滚轮</b> 缩放 · <b>F</b> 适配视图<br>` +
+        `<b>滚轮</b> 缩放 · <b>F</b> 适配 · <b>Alt</b> 吸取<br>` +
         `<b>P</b> 试玩 · <b>Shift+P</b> 光标试玩`;
       el.appendChild(help);
       this.setTool(this.tool);
@@ -77,8 +83,9 @@
     }
 
     setPaintMode(mode) {
-      this.paintMode = mode === 'rect' ? 'rect' : 'brush';
+      this.paintMode = (mode === 'rect' || mode === 'hand') ? mode : 'brush';
       this.rectDrag = null;
+      if (this.app.canvas) this.app.canvas.style.cursor = this.paintMode === 'hand' ? 'grab' : '';
       this.app.syncToolButtons();
       this.app.updateStatus();
     }
@@ -94,7 +101,7 @@
       const i = y * L.w + x;
       const before = L.tiles[i];
       if (before === ch) return;
-      if (ch !== '.' && PF.TILES[ch].unique) { // 起点/终点唯一
+      if (ch !== '.' && PF.TILES[ch].unique) {
         for (let j = 0; j < L.tiles.length; j++) if (L.tiles[j] === ch && j !== i) this.record(j, ch, '.');
       }
       this.record(i, before, ch);
@@ -106,6 +113,15 @@
       const prev = this.stroke.get(i);
       this.stroke.set(i, [prev ? prev[0] : before, after]);
     }
+    // 移动端双指手势触发时，静默回滚刚落下的误触单指笔迹
+    cancelStroke() {
+      if (!this.stroke) return;
+      for (const [i, [before]] of this.stroke) this.level.tiles[i] = before;
+      this.stroke = null;
+      this.last = null;
+      this.rectDrag = null;
+      this.app.markDirty();
+    }
     commit() {
       if (this.stroke && [...this.stroke.values()].some(([a, b]) => a !== b)) {
         this.undoStack.push({ type: 'tiles', changes: this.stroke });
@@ -115,7 +131,6 @@
       }
       this.stroke = null;
     }
-    // 整体替换（清空、改尺寸、导入、切预设、切主题）也可撤销
     replaceLevel(next) {
       this.commit();
       this.undoStack.push({ type: 'level', before: PF.cloneLevel(this.level), after: PF.cloneLevel(next) });
@@ -147,7 +162,7 @@
       this.undoStack.push(e);
     }
 
-    paintLine(a, b, ch) { // Bresenham，避免快速拖动时断线
+    paintLine(a, b, ch) {
       let x0 = a.x, y0 = a.y;
       const dx = Math.abs(b.x - x0), dy = -Math.abs(b.y - y0);
       const sx = x0 < b.x ? 1 : -1, sy = y0 < b.y ? 1 : -1;
@@ -167,11 +182,47 @@
       const minY = Math.max(0, Math.min(y0, y1));
       const maxY = Math.min(this.level.h - 1, Math.max(y0, y1));
       for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-          this.setTile(x, y, ch);
-        }
+        for (let x = minX; x <= maxX; x++) this.setTile(x, y, ch);
       }
       this.commit();
+    }
+
+    startPinch() {
+      const pts = [...this.pointers.values()];
+      if (pts.length < 2) return;
+      this.cancelStroke();
+      this.pan = null;
+      this.hover = null;
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const cam0 = { ...this.app.cam };
+      this.pinch = {
+        cam: cam0,
+        dist0: Math.max(12, dist),
+        worldMid: this.app.renderer.pickPoint(mid.x, mid.y, cam0),
+      };
+      this.pinchCooldown = true;
+    }
+
+    updatePinch() {
+      if (!this.pinch) return;
+      const pts = [...this.pointers.values()];
+      if (pts.length < 2) return;
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      const dist = Math.max(12, Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y));
+      const cam = this.app.cam;
+      cam.dist = Math.min(90, Math.max(6, this.pinch.cam.dist * (this.pinch.dist0 / dist)));
+      if (this.pinch.worldMid) {
+        // 先还原目标再对齐，保持双指中心点精准锁死在世界坐标上
+        cam.tx = this.pinch.cam.tx;
+        cam.ty = this.pinch.cam.ty;
+        const after = this.app.renderer.pickPoint(mid.x, mid.y, cam);
+        if (after) {
+          cam.tx += this.pinch.worldMid.x - after.x;
+          cam.ty += this.pinch.worldMid.y - after.y;
+        }
+      }
+      this.app.updateStatus();
     }
 
     // ---- 输入 ----
@@ -179,8 +230,17 @@
       canvas.addEventListener('contextmenu', (e) => e.preventDefault());
       canvas.addEventListener('pointerdown', (e) => {
         if (this.app.mode !== 'edit') return;
-        canvas.setPointerCapture(e.pointerId);
-        if (e.button === 1 || this.space) {
+        try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        // 双指进入缩放 + 平移手势（自动撤销刚落下的单指误触）
+        if (this.pointers.size >= 2) {
+          this.startPinch();
+          return;
+        }
+        if (this.pinchCooldown) return;
+
+        if (e.button === 1 || this.space || (this.paintMode === 'hand' && e.button !== 2)) {
           const startCam = { ...this.app.cam };
           this.pan = {
             orbit: e.shiftKey,
@@ -193,7 +253,7 @@
           return;
         }
         const t = this.screenToTile(e);
-        if (e.altKey) { // 吸取
+        if (e.altKey) {
           const ch = PF.get(this.level, t.x, t.y);
           if (ch) { this.setTool(ch); this.app.toast(`吸取：${ch === '.' ? '橡皮擦' : PF.TILES[ch].name}`); }
           return;
@@ -208,8 +268,17 @@
         this.last = t;
         this.setTile(t.x, t.y, ch);
       });
+
       canvas.addEventListener('pointermove', (e) => {
         if (this.app.mode !== 'edit') return;
+        if (this.pointers.has(e.pointerId)) {
+          this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+        if (this.pinch && this.pointers.size >= 2) {
+          this.updatePinch();
+          return;
+        }
+        if (this.pinchCooldown) return;
         if (this.pan) {
           const cam = this.app.cam;
           const sc = this.pan.cam;
@@ -227,7 +296,7 @@
           return;
         }
         const t = this.screenToTile(e);
-        this.hover = t;
+        if (e.pointerType !== 'touch' || this.last || this.rectDrag) this.hover = t;
         this.app.updateStatus();
         if (this.rectDrag) {
           this.rectDrag.x1 = t.x;
@@ -240,18 +309,27 @@
           this.last = t;
         }
       });
-      const end = () => {
-        if (this.pan) { this.pan = null; canvas.style.cursor = this.space ? 'grab' : ''; }
+
+      const end = (e) => {
+        if (e && e.pointerId !== undefined) this.pointers.delete(e.pointerId);
+        if (this.pinch && this.pointers.size < 2) this.pinch = null;
+        if (this.pointers.size === 0) this.pinchCooldown = false;
+        if (this.pan) {
+          this.pan = null;
+          canvas.style.cursor = (this.space || this.paintMode === 'hand') ? 'grab' : '';
+        }
         if (this.rectDrag) {
           const r = this.rectDrag;
           this.rectDrag = null;
           this.paintRect(r.x0, r.y0, r.x1, r.y1, r.ch);
         }
         if (this.last) { this.last = null; this.commit(); }
+        if (e && e.pointerType === 'touch') this.hover = null;
       };
       canvas.addEventListener('pointerup', end);
       canvas.addEventListener('pointercancel', end);
       canvas.addEventListener('pointerleave', () => { this.hover = null; this.app.updateStatus(); });
+
       canvas.addEventListener('wheel', (e) => {
         e.preventDefault();
         if (this.app.mode !== 'edit') return;
@@ -288,6 +366,7 @@
       for (const [ch, d] of Object.entries(PF.TILES)) if (d.key && d.key === e.key) { this.setTool(ch); return true; }
       const k = e.key.toLowerCase();
       if (k === 'b') { this.setPaintMode(this.paintMode === 'brush' ? 'rect' : 'brush'); this.app.toast(this.paintMode === 'rect' ? '切换为矩形框选填充' : '切换为自由画笔'); return true; }
+      if (k === 'h') { this.setPaintMode(this.paintMode === 'hand' ? 'brush' : 'hand'); this.app.toast(this.paintMode === 'hand' ? '切换为抓手平移模式' : '切换为自由画笔'); return true; }
       if (k === 'f') { this.app.fitView(); return true; }
       if (k === 'q') { this.app.cam.yaw = Math.max(-0.75, this.app.cam.yaw - 0.12); this.app.updateStatus(); return true; }
       if (k === 'e') { this.app.cam.yaw = Math.min(0.75, this.app.cam.yaw + 0.12); this.app.updateStatus(); return true; }
@@ -303,7 +382,7 @@
       return false;
     }
     keyup(e) {
-      if (e.code === 'Space') { this.space = false; this.app.canvas.style.cursor = ''; }
+      if (e.code === 'Space') { this.space = false; this.app.canvas.style.cursor = this.paintMode === 'hand' ? 'grab' : ''; }
     }
   }
 
