@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PixelForge · 关卡工坊</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">⛏️ <b>PixelForge</b><span class="tag">3D 关卡工坊</span></div>
+    <div class="group" id="editTools">
+      <button id="btnPlay" class="primary" title="试玩 (P)，Shift+P 从光标处试玩">▶ 试玩</button>
+      <button id="btnUndo" title="撤销 (⌘/Ctrl+Z)">↶ 撤销</button>
+      <button id="btnRedo" title="重做 (⌘/Ctrl+Shift+Z)">↷ 重做</button>
+      <span class="sep"></span>
+      <button id="btnShare" title="复制分享链接">🔗 分享</button>
+      <button id="btnExport" title="导出关卡文件">⬇ 导出</button>
+      <button id="btnImport" title="导入关卡文件">⬆ 导入</button>
+      <span class="sep"></span>
+      <button id="btnResize" title="修改关卡尺寸">📐 尺寸</button>
+      <button id="btnSample" title="载入示例关卡">🗺 示例</button>
+      <button id="btnClear" class="danger" title="清空关卡">🗑 清空</button>
+    </div>
+    <div class="group hidden" id="playTools">
+      <button id="btnStop" class="primary">■ 返回编辑 (Esc)</button>
+      <button id="btnRestart">↻ 重来 (R)</button>
+    </div>
+  </header>
+  <main>
+    <aside id="palette"></aside>
+    <div id="stage">
+      <div id="hud" class="hidden">
+        <span class="hud-pill gold" id="hudCoins">金币 0/0</span>
+        <span class="hud-pill" id="hudTime">时间 0.0s</span>
+        <span class="hud-pill" id="hudDeaths">死亡 0</span>
+      </div>
+      <div id="playTip" class="hidden">← → / A D 移动 · 空格 / ↑ 跳跃（按得越久跳得越高）</div>
+      <div id="winOverlay" class="hidden">
+        <div class="win-card">
+          <div class="win-title">🏁 通关！</div>
+          <div class="win-stars" id="winStars">⭐⭐⭐</div>
+          <div class="win-stats" id="winStats">用时 0.00s · 金币 0/0 · 死亡 0 次</div>
+          <div class="win-sub">R / Enter 再来一次 · Esc 返回编辑</div>
+        </div>
+      </div>
+      <div id="deadFlash" class="hidden"></div>
+      <div id="toast"></div>
+    </div>
+  </main>
+  <footer id="status">就绪</footer>
+  <input type="file" id="fileInput" accept=".json,.txt" hidden />
+
+  <script src="vendor/three.min.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/render3d.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
