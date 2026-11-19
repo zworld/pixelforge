@@ -1,12 +1,12 @@
-/* PixelForge — 程序化 WebAudio 音效引擎 + 4 主题动态合成 BGM（零外部音频素材） */
+/* Studio Core — 跨游戏共享程序化 WebAudio 音效引擎 + 动态 BGM 音序器（零外部音频素材） */
 (function (G) {
   'use strict';
-  const PF = (G.PF = G.PF || {});
+  const Studio = (G.Studio = G.Studio || {});
 
   const PENTATONIC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
   const midiFreq = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
-  // 4 套风格化程序 BGM 乐谱（lead MIDI + bass MIDI + 速度 BPM）
+  // 内置 5 套风格化 BGM（各游戏可通过 registerTrack 扩展新曲目）
   const BGM_TRACKS = {
     meadow: {
       bpm: 132, wave: 'triangle', bassWave: 'sine',
@@ -36,6 +36,13 @@
       bass: [40, 40, 0, 40, 46, 0, 45, 43, 40, 40, 0, 40, 43, 45, 46, 0,
              40, 40, 0, 40, 47, 0, 46, 43, 45, 43, 40, 38, 40, 0, 38, 0],
     },
+    synthwave: {
+      bpm: 136, wave: 'sawtooth', bassWave: 'sawtooth',
+      lead: [69, 0, 76, 79, 81, 0, 79, 76, 72, 0, 76, 79, 76, 0, 74, 72,
+             65, 0, 72, 76, 77, 0, 76, 72, 67, 71, 74, 79, 76, 0, 74, 0],
+      bass: [45, 45, 45, 57, 45, 45, 57, 45, 48, 48, 48, 60, 48, 48, 55, 48,
+             41, 41, 41, 53, 41, 41, 53, 41, 43, 43, 43, 55, 43, 43, 55, 43],
+    },
   };
 
   class AudioEngine {
@@ -49,6 +56,25 @@
       this.bgmTheme = 'meadow';
       this.bgmStep = 0;
       this.bgmTimer = null;
+      this.unlocked = false;
+    }
+
+    registerTrack(id, track) {
+      BGM_TRACKS[id] = track;
+    }
+
+    bindAutoUnlock() {
+      if (this.unlocked || typeof window === 'undefined') return;
+      const unlock = () => {
+        this.unlocked = true;
+        this.ensure();
+        window.removeEventListener('pointerdown', unlock);
+        window.removeEventListener('touchstart', unlock);
+        window.removeEventListener('keydown', unlock);
+      };
+      window.addEventListener('pointerdown', unlock, { passive: true });
+      window.addEventListener('touchstart', unlock, { passive: true });
+      window.addEventListener('keydown', unlock, { passive: true });
     }
 
     ensure() {
@@ -56,7 +82,7 @@
         if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         return this.ctx;
       }
-      const AC = window.AudioContext || window.webkitAudioContext;
+      const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
       if (!AC) return null;
       this.ctx = new AC();
       const comp = this.ctx.createDynamicsCompressor();
@@ -66,7 +92,6 @@
       this.master.gain.value = 0.85;
       this.master.connect(comp).connect(this.ctx.destination);
 
-      // 预生成 0.5 秒白噪声缓冲（供冲刺/破砖/碎裂板使用）
       const len = Math.floor(this.ctx.sampleRate * 0.5);
       this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const data = this.noiseBuf.getChannelData(0);
@@ -120,6 +145,7 @@
       if (!this.sfxOn) return;
       try {
         switch (type) {
+          // ---- 平台跳跃类音效 ----
           case 'jump':
             this.tone('square', 280, 580, 0.09, 0.07, 0, 2600);
             this.tone('triangle', 220, 440, 0.07, 0.06);
@@ -137,11 +163,12 @@
             this.tone('triangle', 340, 880, 0.14, 0.11);
             this.tone('square', 520, 1040, 0.12, 0.06, 0.03, 2400);
             break;
-          case 'coin': {
+          case 'coin':
+          case 'xp': {
             const idx = Math.min(PENTATONIC.length - 1, Math.max(0, (ev.streak || 1) - 1));
-            const base = midiFreq(76 + PENTATONIC[idx] * 0.5);
-            this.tone('square', base, base, 0.055, 0.055, 0, 3200);
-            this.tone('triangle', base * 1.5, base * 1.5, 0.13, 0.08, 0.045);
+            const base = midiFreq((type === 'xp' ? 79 : 76) + PENTATONIC[idx] * 0.5);
+            this.tone(type === 'xp' ? 'sine' : 'square', base, base, 0.05, type === 'xp' ? 0.045 : 0.055, 0, 3200);
+            this.tone('triangle', base * 1.5, base * 1.5, 0.11, 0.065, 0.04);
             break;
           }
           case 'stomp': {
@@ -184,6 +211,39 @@
             this.noise(0.13, 0.14, 900, 180, 1.0);
             this.tone('sawtooth', 240, 60, 0.12, 0.09, 0, 1200);
             break;
+          // ---- 射击 / 肉鸽生存类音效 ----
+          case 'shoot':
+            this.tone('triangle', 680, 220, 0.055, 0.045, 0, 2600);
+            break;
+          case 'hit':
+            this.tone('square', 220, 110, 0.04, 0.04, 0, 1400);
+            break;
+          case 'kill':
+            this.noise(0.09, 0.08, 800, 160, 1.0);
+            this.tone('triangle', 300, 90, 0.09, 0.08);
+            break;
+          case 'lightning':
+            this.noise(0.11, 0.11, 2400, 900, 1.8);
+            this.tone('sawtooth', 1200, 420, 0.09, 0.06, 0, 2800);
+            break;
+          case 'shockwave':
+            this.noise(0.26, 0.18, 950, 110, 0.7);
+            this.tone('sawtooth', 260, 42, 0.28, 0.14, 0, 700);
+            this.tone('sine', 420, 90, 0.24, 0.12);
+            break;
+          case 'hurt':
+            this.noise(0.14, 0.14, 600, 160, 0.9);
+            this.tone('sawtooth', 190, 65, 0.16, 0.11, 0, 900);
+            break;
+          case 'levelup':
+            [523, 659, 784, 1047].forEach((f, i) => {
+              this.tone('triangle', f, f * 1.02, 0.14, 0.095, i * 0.065);
+            });
+            break;
+          case 'boss':
+            this.tone('sawtooth', 110, 75, 0.35, 0.12, 0, 650);
+            this.tone('sawtooth', 105, 68, 0.35, 0.12, 0.22, 650);
+            break;
           case 'die':
             this.noise(0.22, 0.14, 700, 120, 0.8);
             this.tone('sawtooth', 420, 70, 0.36, 0.10, 0, 1100);
@@ -206,7 +266,7 @@
       this.bgmPlaying = true;
       this.bgmStep = 0;
       const track = BGM_TRACKS[this.bgmTheme];
-      const stepMs = (60000 / track.bpm) / 2; // 八分音符步进
+      const stepMs = (60000 / track.bpm) / 2;
       const tick = () => {
         if (!this.bgmPlaying || !this.bgmOn) return;
         const tr = BGM_TRACKS[this.bgmTheme] || BGM_TRACKS.meadow;
@@ -232,10 +292,11 @@
     toggleBgm(activePlay, theme) {
       this.bgmOn = !this.bgmOn;
       if (!this.bgmOn) this.stopBgm();
-      else if (activePlay) this.startBgm(theme);
+      else if (activePlay) this.startBgm(theme || this.bgmTheme);
       return this.bgmOn;
     }
   }
 
-  PF.Audio = new AudioEngine();
-})(window);
+  Studio.Audio = new AudioEngine();
+  if (typeof window !== 'undefined') Studio.Audio.bindAutoUnlock();
+})(typeof window !== 'undefined' ? window : globalThis);

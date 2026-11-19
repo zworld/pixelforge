@@ -227,8 +227,16 @@
 
     // ---- 输入 ----
     bind(canvas) {
-      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-      canvas.addEventListener('pointerdown', (e) => {
+      this.unbind();
+      this._canvas = canvas;
+      this._listeners = [];
+      const on = (type, fn, opts) => {
+        canvas.addEventListener(type, fn, opts);
+        this._listeners.push([type, fn, opts]);
+      };
+
+      on('contextmenu', (e) => e.preventDefault());
+      on('pointerdown', (e) => {
         if (this.app.mode !== 'edit') return;
         try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
         this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -269,7 +277,7 @@
         this.setTile(t.x, t.y, ch);
       });
 
-      canvas.addEventListener('pointermove', (e) => {
+      on('pointermove', (e) => {
         if (this.app.mode !== 'edit') return;
         if (this.pointers.has(e.pointerId)) {
           this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -326,11 +334,11 @@
         if (this.last) { this.last = null; this.commit(); }
         if (e && e.pointerType === 'touch') this.hover = null;
       };
-      canvas.addEventListener('pointerup', end);
-      canvas.addEventListener('pointercancel', end);
-      canvas.addEventListener('pointerleave', () => { this.hover = null; this.app.updateStatus(); });
+      on('pointerup', end);
+      on('pointercancel', end);
+      on('pointerleave', () => { this.hover = null; this.app.updateStatus(); });
 
-      canvas.addEventListener('wheel', (e) => {
+      on('wheel', (e) => {
         e.preventDefault();
         if (this.app.mode !== 'edit') return;
         const r = this.app.renderer;
@@ -354,6 +362,20 @@
         }
         this.app.updateStatus();
       }, { passive: false });
+    }
+
+    unbind() {
+      if (this._canvas && this._listeners) {
+        for (const [type, fn, opts] of this._listeners) this._canvas.removeEventListener(type, fn, opts);
+        this._canvas.style.cursor = '';
+      }
+      this._listeners = null;
+      this._canvas = null;
+      this.pointers.clear();
+      this.pinch = null;
+      this.pan = null;
+      this.last = null;
+      this.rectDrag = null;
     }
 
     keydown(e) {

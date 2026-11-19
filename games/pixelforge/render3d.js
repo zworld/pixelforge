@@ -407,22 +407,32 @@
   };
 
   class Renderer3D {
-    constructor(container) {
+    constructor(container, gfx) {
       buildSharedAssets();
       this.container = container;
-      this.gl = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-      this.gl.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-      this.gl.shadowMap.enabled = true;
-      this.gl.shadowMap.type = THREE.PCFSoftShadowMap;
-      this.gl.toneMapping = THREE.ACESFilmicToneMapping;
+      if (gfx && gfx.gl) {
+        this.gl = gfx.gl;
+        this.canvas = gfx.canvas;
+      } else if (G.Studio && G.Studio.Gfx3D) {
+        G.Studio.Gfx3D.ensure(container);
+        this.gl = G.Studio.Gfx3D.gl;
+        this.canvas = G.Studio.Gfx3D.canvas;
+      } else {
+        this.gl = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        this.gl.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+        this.gl.shadowMap.enabled = true;
+        this.gl.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.gl.toneMapping = THREE.ACESFilmicToneMapping;
+        this.gl.toneMappingExposure = 1.06;
+        this.gl.domElement.id = 'view';
+        this.gl.domElement.tabIndex = 0;
+        container.prepend(this.gl.domElement);
+        this.canvas = this.gl.domElement;
+      }
       this.gl.toneMappingExposure = 1.06;
-      this.gl.domElement.id = 'view';
-      this.gl.domElement.tabIndex = 0;
-      container.prepend(this.gl.domElement);
-      this.canvas = this.gl.domElement;
 
       this.scene = new THREE.Scene();
-      this.skyDome = createSkyDome();
+      this.skyDome = (G.Studio && G.Studio.createSkyDome) ? G.Studio.createSkyDome(THREE) : createSkyDome();
       this.scene.add(this.skyDome);
       this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 450);
 
@@ -1211,6 +1221,19 @@
       this._q.identity(); s.set(1, 1, 1);
 
       this.gl.render(this.scene, this.camera);
+    }
+
+    dispose() {
+      if (G.Studio && G.Studio.disposeObject) G.Studio.disposeObject(this.scene);
+      for (const k of Object.keys(this.themeMats)) {
+        const tm = this.themeMats[k];
+        if (tm && tm.dirt) tm.dirt.dispose();
+        if (tm && Array.isArray(tm.grass)) tm.grass.forEach((m) => m && m.dispose());
+      }
+      this.themeMats = {};
+      for (const k of Object.keys(TEX)) { if (TEX[k] && TEX[k].dispose) TEX[k].dispose(); delete TEX[k]; }
+      for (const k of Object.keys(MAT)) { if (MAT[k] && MAT[k].dispose) MAT[k].dispose(); delete MAT[k]; }
+      sharedBuilt = false;
     }
   }
 
