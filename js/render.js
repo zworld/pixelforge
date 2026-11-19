@@ -85,6 +85,70 @@
         ctx.beginPath(); ctx.moveTo(px + 9, py - 22); ctx.lineTo(px + 20 + w, py - 17); ctx.lineTo(px + 9, py - 12); ctx.fill();
         break;
       }
+      case 'I': // 冰块
+        R(0, 0, 16, 16, '#7dd3fc');
+        R(0, 0, 16, 2, '#e0f2fe');
+        R(0, 14, 16, 2, '#0284c7');
+        R(2, 3, 5, 2, '#ffffff');
+        R(3, 5, 2, 3, '#bae6fd');
+        R(9, 8, 4, 2, '#e0f2fe');
+        break;
+      case 'K': // 碎裂浮板
+        R(0, 1, 16, 13, '#9ca3af');
+        R(0, 1, 16, 2, '#d1d5db');
+        R(0, 12, 16, 2, '#4b5563');
+        R(5, 2, 1, 5, '#1f2937'); R(6, 7, 2, 1, '#1f2937'); R(8, 8, 1, 5, '#1f2937');
+        R(11, 3, 1, 4, '#374151'); R(3, 9, 2, 1, '#374151');
+        break;
+      case 'M': // 移动平台
+        R(0, 3, 16, 6, '#38bdf8');
+        R(1, 4, 14, 4, '#0f172a');
+        R(2, 5, 4, 2, '#38bdf8'); R(10, 5, 4, 2, '#38bdf8');
+        R(3, 9, 3, 2, '#f97316'); R(10, 9, 3, 2, '#f97316');
+        break;
+      case 'C': // 充能水晶
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.moveTo(px + 8, py + 1); ctx.lineTo(px + 14, py + 8);
+        ctx.lineTo(px + 8, py + 15); ctx.lineTo(px + 2, py + 8);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#6ee7b7';
+        ctx.beginPath();
+        ctx.moveTo(px + 8, py + 2); ctx.lineTo(px + 11, py + 8);
+        ctx.lineTo(px + 8, py + 12); ctx.lineTo(px + 5, py + 8);
+        ctx.closePath(); ctx.fill();
+        R(7, 5, 2, 3, '#ffffff');
+        break;
+      case 'T': // 红蓝开关
+        R(1, 1, 14, 14, '#1e293b');
+        R(1, 1, 7, 14, '#ef4444');
+        R(8, 1, 7, 14, '#3b82f6');
+        R(0, 0, 16, 1, '#f8fafc'); R(0, 15, 16, 1, '#f8fafc');
+        R(0, 0, 1, 16, '#f8fafc'); R(15, 0, 1, 16, '#f8fafc');
+        R(4, 5, 8, 6, '#ffffff');
+        R(6, 6, 4, 4, '#0f172a');
+        break;
+      case 'R': // 红方块
+        R(0, 0, 16, 16, '#ef4444');
+        R(1, 1, 14, 2, '#fca5a5');
+        R(1, 13, 14, 2, '#991b1b');
+        R(4, 4, 8, 8, '#dc2626');
+        R(5, 5, 6, 1, '#fecaca');
+        break;
+      case 'U': // 蓝方块
+        R(0, 0, 16, 16, '#3b82f6');
+        R(1, 1, 14, 2, '#93c5fd');
+        R(1, 13, 14, 2, '#1e40af');
+        R(4, 4, 8, 8, '#2563eb');
+        R(5, 5, 6, 1, '#bfdbfe');
+        break;
+      case 'F': // 存档旗
+        R(5, 13, 6, 3, '#64748b');
+        R(7, 2, 2, 11, '#e2e8f0');
+        R(6, 1, 4, 2, '#facc15');
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath(); ctx.moveTo(px + 9, py + 3); ctx.lineTo(px + 15, py + 6); ctx.lineTo(px + 9, py + 9); ctx.fill();
+        break;
     }
   }
 

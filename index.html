@@ -3,57 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PixelForge · 关卡工坊</title>
+  <title>PixelForge · 3D 关卡工坊</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header id="topbar">
     <div class="brand">⛏️ <b>PixelForge</b><span class="tag">3D 关卡工坊</span></div>
+
     <div class="group" id="editTools">
       <button id="btnPlay" class="primary" title="试玩 (P)，Shift+P 从光标处试玩">▶ 试玩</button>
+      <button id="btnBrush" class="toggle active" title="自由画笔 (B)">✏️ 画笔</button>
+      <button id="btnRect" class="toggle" title="矩形框选填充 (B)">▭ 框选</button>
       <button id="btnUndo" title="撤销 (⌘/Ctrl+Z)">↶ 撤销</button>
       <button id="btnRedo" title="重做 (⌘/Ctrl+Shift+Z)">↷ 重做</button>
       <span class="sep"></span>
-      <button id="btnShare" title="复制分享链接">🔗 分享</button>
+      <select id="selTheme" title="切换 3D 场景主题与配乐">
+        <option value="meadow">🌿 翠绿草原</option>
+        <option value="cyber">🌃 霓虹赛博</option>
+        <option value="frost">❄️ 冰霜雪山</option>
+        <option value="volcano">🌋 熔岩地堡</option>
+      </select>
+      <select id="selPreset" title="载入精品演示关卡">
+        <option value="">🗺 精品关卡...</option>
+        <option value="meadow">1. 翠绿启程（入门）</option>
+        <option value="cyber">2. 红蓝律动（开关）</option>
+        <option value="frost">3. 蔚蓝之巅（蹬墙/水晶）</option>
+        <option value="volcano">4. 熔岩试炼（综合）</option>
+      </select>
+      <span class="sep"></span>
+      <button id="btnAiCheck" class="accent" title="调用内置束搜索 AI 检验当前关卡是否可通关并生成演示录像">🤖 AI 验关</button>
+      <button id="btnAiWatch" class="accent hidden" title="在 3D 场景中观看 AI 自动通关演示">🎬 AI 演示</button>
+      <button id="btnTrail" class="toggle active" title="在编辑视图中显示上次试玩轨迹">👣 轨迹</button>
+      <span class="sep"></span>
+      <button id="btnShare" title="复制分享链接（含主题与全部机关）">🔗 分享</button>
       <button id="btnExport" title="导出关卡文件">⬇ 导出</button>
       <button id="btnImport" title="导入关卡文件">⬆ 导入</button>
-      <span class="sep"></span>
       <button id="btnResize" title="修改关卡尺寸">📐 尺寸</button>
-      <button id="btnSample" title="载入示例关卡">🗺 示例</button>
       <button id="btnClear" class="danger" title="清空关卡">🗑 清空</button>
     </div>
+
     <div class="group hidden" id="playTools">
       <button id="btnStop" class="primary">■ 返回编辑 (Esc)</button>
-      <button id="btnRestart">↻ 重来 (R)</button>
+      <button id="btnRestart">↻ 从头重来 (R)</button>
+      <span id="playModeBadge" class="badge hidden">🤖 AI 自动演示中</span>
+    </div>
+
+    <div class="group right-tools">
+      <button id="btnBgm" class="toggle active" title="开关程序化主题 BGM">🎵 音乐</button>
     </div>
   </header>
+
   <main>
     <aside id="palette"></aside>
     <div id="stage">
       <div id="hud" class="hidden">
-        <span class="hud-pill gold" id="hudCoins">金币 0/0</span>
-        <span class="hud-pill" id="hudTime">时间 0.0s</span>
-        <span class="hud-pill" id="hudDeaths">死亡 0</span>
+        <span class="hud-pill gold" id="hudCoins">🪙 0/0</span>
+        <span class="hud-pill mono" id="hudTime">⏱ 00.00s</span>
+        <span class="hud-pill" id="hudDeaths">💀 0</span>
+        <span class="hud-pill dash-ready" id="hudDash">⚡ 冲刺就绪</span>
+        <span class="hud-pill switch-on hidden" id="hudSwitch">🔴 ON</span>
+        <span class="hud-pill pb hidden" id="hudPb">🏆 最快 --</span>
       </div>
-      <div id="playTip" class="hidden">← → / A D 移动 · 空格 / ↑ 跳跃（按得越久跳得越高）</div>
+
+      <div id="playTip" class="hidden">
+        ←→/AD 移动 · 空格/↑ 跳跃（贴墙可蹬墙跳） · <b>Shift/X/J</b> 八向冲刺（可破砖/撞开关）
+      </div>
+
       <div id="winOverlay" class="hidden">
         <div class="win-card">
+          <div class="win-badge" id="winRank">S</div>
           <div class="win-title">🏁 通关！</div>
           <div class="win-stars" id="winStars">⭐⭐⭐</div>
           <div class="win-stats" id="winStats">用时 0.00s · 金币 0/0 · 死亡 0 次</div>
-          <div class="win-sub">R / Enter 再来一次 · Esc 返回编辑</div>
+          <div class="win-record hidden" id="winRecord">🏆 刷新最快纪录！下次重玩将开启金色幽灵竞速</div>
+          <div class="win-actions">
+            <button id="btnWinReplay" class="primary">↻ 再战一次 (R)</button>
+            <button id="btnWinEdit">✏️ 返回编辑 (Esc)</button>
+          </div>
         </div>
       </div>
+
       <div id="deadFlash" class="hidden"></div>
+      <div id="switchFlash" class="hidden"></div>
       <div id="toast"></div>
     </div>
   </main>
+
   <footer id="status">就绪</footer>
   <input type="file" id="fileInput" accept=".json,.txt" hidden />
 
   <script src="vendor/three.min.js"></script>
   <script src="js/level.js"></script>
   <script src="js/engine.js"></script>
+  <script src="js/audio.js"></script>
   <script src="js/render.js"></script>
   <script src="js/render3d.js"></script>
   <script src="js/editor.js"></script>

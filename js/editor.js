@@ -1,16 +1,24 @@
-/* PixelForge — 3D 关卡编辑器 */
+/* PixelForge — 3D 关卡编辑器（分组调色板、画笔/矩形框选填充、射线拾取、3D 镜头操控、完整撤销栈） */
 (function (G) {
   'use strict';
   const PF = G.PF;
+
+  const CATS = [
+    { id: 'terrain', label: '地形方块' },
+    { id: 'gizmo',   label: '高级机关' },
+    { id: 'entity',  label: '实体与工具' },
+  ];
 
   class Editor {
     constructor(app) {
       this.app = app;
       this.tool = '#';
+      this.paintMode = 'brush'; // 'brush' | 'rect'
       this.undoStack = [];
       this.redoStack = [];
       this.stroke = null; // Map idx -> [before, after]
       this.last = null;
+      this.rectDrag = null; // { x0, y0, x1, y1, ch }
       this.hover = null;
       this.pan = null;
       this.space = false;
@@ -20,22 +28,44 @@
 
     buildPalette(el) {
       el.innerHTML = '';
-      const items = [...Object.entries(PF.TILES).map(([ch, d]) => ({ ch, ...d })), { ch: '.', name: '橡皮擦', key: '0', desc: '右键也可擦除' }];
       this.buttons = {};
-      for (const it of items) {
-        const b = document.createElement('button');
-        b.className = 'tool';
-        b.title = `${it.name}（${it.key}）— ${it.desc}`;
-        b.appendChild(PF.tileIcon(it.ch, 32));
-        const n = document.createElement('span'); n.textContent = it.name; b.appendChild(n);
-        const k = document.createElement('kbd'); k.textContent = it.key; b.appendChild(k);
-        b.onclick = () => this.setTool(it.ch);
-        el.appendChild(b);
-        this.buttons[it.ch] = b;
+      const entries = [
+        ...Object.entries(PF.TILES).map(([ch, d]) => ({ ch, ...d })),
+        { ch: '.', name: '橡皮擦', key: '0', cat: 'entity', desc: '右键也可擦除' },
+      ];
+
+      for (const cat of CATS) {
+        const title = document.createElement('div');
+        title.className = 'pal-cat';
+        title.textContent = cat.label;
+        el.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'pal-grid';
+        for (const it of entries.filter((x) => x.cat === cat.id)) {
+          const b = document.createElement('button');
+          b.className = 'tool';
+          b.title = `${it.name}${it.key ? `（${it.key}）` : ''} — ${it.desc}`;
+          b.appendChild(PF.tileIcon(it.ch, 32));
+          const n = document.createElement('span'); n.textContent = it.name; b.appendChild(n);
+          if (it.key) {
+            const k = document.createElement('kbd'); k.textContent = it.key; b.appendChild(k);
+          }
+          b.onclick = () => this.setTool(it.ch);
+          grid.appendChild(b);
+          this.buttons[it.ch] = b;
+        }
+        el.appendChild(grid);
       }
+
       const help = document.createElement('div');
       help.className = 'help';
-      help.innerHTML = `<b>左键</b> 绘制 · <b>右键</b> 擦除<br><b>Alt+点击</b> 吸取<br><b>空格/中键拖动</b> 平移<br><b>Q / E</b> 旋转 3D 视角<br><b>滚轮</b> 缩放 · <b>F</b> 适配<br><b>P</b> 试玩 · <b>Shift+P</b> 光标试玩`;
+      help.innerHTML =
+        `<b>左键</b> 绘制 · <b>右键</b> 擦除<br>` +
+        `<b>B</b> 画笔/矩形框选 · <b>Alt</b> 吸取<br>` +
+        `<b>空格/中键</b> 平移 · <b>Q/E</b> 转视角<br>` +
+        `<b>滚轮</b> 缩放 · <b>F</b> 适配视图<br>` +
+        `<b>P</b> 试玩 · <b>Shift+P</b> 光标试玩`;
       el.appendChild(help);
       this.setTool(this.tool);
     }
@@ -43,6 +73,13 @@
     setTool(ch) {
       this.tool = ch;
       for (const [k, b] of Object.entries(this.buttons || {})) b.classList.toggle('active', k === ch);
+      this.app.updateStatus();
+    }
+
+    setPaintMode(mode) {
+      this.paintMode = mode === 'rect' ? 'rect' : 'brush';
+      this.rectDrag = null;
+      this.app.syncToolButtons();
       this.app.updateStatus();
     }
 
@@ -78,7 +115,7 @@
       }
       this.stroke = null;
     }
-    // 整体替换（清空、改尺寸、导入）也可撤销
+    // 整体替换（清空、改尺寸、导入、切预设、切主题）也可撤销
     replaceLevel(next) {
       this.commit();
       this.undoStack.push({ type: 'level', before: PF.cloneLevel(this.level), after: PF.cloneLevel(next) });
@@ -124,6 +161,19 @@
       }
     }
 
+    paintRect(x0, y0, x1, y1, ch) {
+      const minX = Math.max(0, Math.min(x0, x1));
+      const maxX = Math.min(this.level.w - 1, Math.max(x0, x1));
+      const minY = Math.max(0, Math.min(y0, y1));
+      const maxY = Math.min(this.level.h - 1, Math.max(y0, y1));
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          this.setTile(x, y, ch);
+        }
+      }
+      this.commit();
+    }
+
     // ---- 输入 ----
     bind(canvas) {
       canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -148,9 +198,15 @@
           if (ch) { this.setTool(ch); this.app.toast(`吸取：${ch === '.' ? '橡皮擦' : PF.TILES[ch].name}`); }
           return;
         }
-        this.paintCh = e.button === 2 ? '.' : this.tool;
+        const ch = e.button === 2 ? '.' : this.tool;
+        this.paintCh = ch;
+        const isUnique = ch !== '.' && PF.TILES[ch].unique;
+        if (this.paintMode === 'rect' && !isUnique) {
+          this.rectDrag = { x0: t.x, y0: t.y, x1: t.x, y1: t.y, ch };
+          return;
+        }
         this.last = t;
-        this.setTile(t.x, t.y, this.paintCh);
+        this.setTile(t.x, t.y, ch);
       });
       canvas.addEventListener('pointermove', (e) => {
         if (this.app.mode !== 'edit') return;
@@ -173,6 +229,11 @@
         const t = this.screenToTile(e);
         this.hover = t;
         this.app.updateStatus();
+        if (this.rectDrag) {
+          this.rectDrag.x1 = t.x;
+          this.rectDrag.y1 = t.y;
+          return;
+        }
         if (this.last && (t.x !== this.last.x || t.y !== this.last.y)) {
           if (this.paintCh !== '.' && PF.TILES[this.paintCh].unique) this.setTile(t.x, t.y, this.paintCh);
           else this.paintLine(this.last, t, this.paintCh);
@@ -181,6 +242,11 @@
       });
       const end = () => {
         if (this.pan) { this.pan = null; canvas.style.cursor = this.space ? 'grab' : ''; }
+        if (this.rectDrag) {
+          const r = this.rectDrag;
+          this.rectDrag = null;
+          this.paintRect(r.x0, r.y0, r.x1, r.y1, r.ch);
+        }
         if (this.last) { this.last = null; this.commit(); }
       };
       canvas.addEventListener('pointerup', end);
@@ -191,7 +257,6 @@
         if (this.app.mode !== 'edit') return;
         const r = this.app.renderer;
         const cam = this.app.cam;
-        // 规则：捏合/Ctrl+滚轮/纯竖向滚轮 = 缩放；有横向分量（触控板）或 Shift = 平移
         const panMode = !e.ctrlKey && (e.shiftKey || Math.abs(e.deltaX) > 0.5);
         if (!panMode) {
           const before = r.pickPoint(e.clientX, e.clientY, cam);
@@ -220,8 +285,9 @@
       if (mod) return false;
       if (e.code === 'Space') { e.preventDefault(); this.space = true; this.app.canvas.style.cursor = 'grab'; return true; }
       if (e.key === '0') { this.setTool('.'); return true; }
-      for (const [ch, d] of Object.entries(PF.TILES)) if (d.key === e.key) { this.setTool(ch); return true; }
+      for (const [ch, d] of Object.entries(PF.TILES)) if (d.key && d.key === e.key) { this.setTool(ch); return true; }
       const k = e.key.toLowerCase();
+      if (k === 'b') { this.setPaintMode(this.paintMode === 'brush' ? 'rect' : 'brush'); this.app.toast(this.paintMode === 'rect' ? '切换为矩形框选填充' : '切换为自由画笔'); return true; }
       if (k === 'f') { this.app.fitView(); return true; }
       if (k === 'q') { this.app.cam.yaw = Math.max(-0.75, this.app.cam.yaw - 0.12); this.app.updateStatus(); return true; }
       if (k === 'e') { this.app.cam.yaw = Math.min(0.75, this.app.cam.yaw + 0.12); this.app.updateStatus(); return true; }
