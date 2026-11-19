@@ -10,7 +10,8 @@
   const detectTouchDevice = () =>
     (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
     navigator.maxTouchPoints > 0 ||
-    window.innerWidth <= 860;
+    window.innerWidth <= 860 ||
+    window.innerHeight <= 540;
 
   const app = {
     level: null,
@@ -69,11 +70,23 @@
           this.touchEnabled = detectTouchDevice();
           this.syncToolButtons();
         }
-        if (this.mode === 'play' && this.game) this.applyPlayCameraDist();
+        if (this.mode === 'play' && this.game) {
+          this.applyPlayCameraDist();
+          this.followCamera(true);
+        } else if (this.mode === 'edit' && this.level) {
+          this.fitView();
+        }
         this.updateStatus();
       };
       window.addEventListener('resize', onResize);
-      window.addEventListener('orientationchange', () => setTimeout(onResize, 120));
+      window.addEventListener('orientationchange', () => setTimeout(onResize, 160));
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
+      document.addEventListener('fullscreenchange', () => {
+        const fs = !!document.fullscreenElement;
+        $('btnFullscreen').classList.toggle('active', fs);
+        $('btnFloatFs').classList.toggle('active', fs);
+        setTimeout(onResize, 80);
+      });
 
       // iOS / 移动端首次触摸解锁 WebAudio 上下文
       const unlockAudio = () => {
@@ -157,8 +170,32 @@
       $('btnHand').classList.toggle('active', this.editor.paintMode === 'hand');
       $('btnTrail').classList.toggle('active', this.showTrail);
       $('btnBgm').classList.toggle('active', PF.Audio.bgmOn);
+      $('btnFloatBgm').classList.toggle('active', PF.Audio.bgmOn);
       $('btnTouchToggle').classList.toggle('active', this.touchEnabled);
       this.syncTouchVisibility();
+    },
+
+    async toggleFullscreenLandscape() {
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) await document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          try { screen.orientation?.unlock?.(); } catch (e) { /* ignore */ }
+          return;
+        }
+        const root = document.documentElement;
+        if (root.requestFullscreen) {
+          await root.requestFullscreen();
+          try { await screen.orientation?.lock?.('landscape'); } catch (e) { /* 设备不支持方向锁时忽略 */ }
+          this.toast('⛶ 已进入全屏横屏模式');
+        } else if (root.webkitRequestFullscreen) {
+          root.webkitRequestFullscreen();
+        } else {
+          this.toast('请将手机横屏旋转，试玩态自动全屏铺满 📱');
+        }
+      } catch (e) {
+        this.toast('请将手机横屏旋转，试玩态自动全屏铺满 📱');
+      }
     },
 
     syncTouchVisibility() {
@@ -225,8 +262,11 @@
       const r = this.renderer;
       const tanHalf = Math.tan((r.camera.fov * Math.PI) / 360);
       const aspect = Math.max(0.45, r.w / r.h);
-      const distH = Math.min(this.level.h + 2, 17) / (2 * tanHalf);
-      // 手机竖屏保证水平至少可见 14 格，提前看清前方尖刺与深渊
+      const mobileLandscape = r.h <= 540 && aspect > 1.35;
+      // 手机横屏掌机比例：放大画面让角色与机关清晰易读（约 13 格高 × 26 格宽）
+      const targetH = mobileLandscape ? Math.min(this.level.h + 1.5, 13.2) : Math.min(this.level.h + 2, 17);
+      const distH = targetH / (2 * tanHalf);
+      // 手机竖屏保证水平至少可见 14.5 格，提前看清前方尖刺与深渊
       const distW = aspect < 0.85 ? 14.5 / (2 * tanHalf * aspect) : 0;
       this.cam.dist = Math.max(12, Math.min(42, Math.max(distH, distW)));
     },
@@ -261,6 +301,7 @@
       $('playTools').classList.remove('hidden');
       $('palette').classList.add('hidden');
       $('hud').classList.remove('hidden');
+      $('floatPlayBar').classList.remove('hidden');
       $('playModeBadge').classList.toggle('hidden', !aiDemo);
       document.body.classList.add('playing');
       this.syncTouchVisibility();
@@ -305,6 +346,7 @@
       $('playTools').classList.add('hidden');
       $('palette').classList.remove('hidden');
       $('hud').classList.add('hidden');
+      $('floatPlayBar').classList.add('hidden');
       $('playTip').classList.add('hidden');
       $('winOverlay').classList.add('hidden');
       $('deadFlash').classList.add('hidden');
@@ -538,8 +580,9 @@
       const px = (g.px + 6) / T;
       const py = -(g.py + 7) / T;
       let tx = px + g.facing * Math.min(2.6, vis.w * 0.085);
-      // 手机端触屏手柄位于底部，画面焦点略微下偏使主角居于中上部视野更开阔
-      const yBias = this.touchEnabled ? -vis.h * 0.04 : vis.h * 0.05;
+      // 竖屏触屏键在底部，焦点略下移；横屏键在左右底角，焦点自然居中略上
+      const isPortraitTouch = this.touchEnabled && r.w < r.h;
+      const yBias = isPortraitTouch ? -vis.h * 0.04 : vis.h * 0.03;
       let ty = py + yBias;
       const halfW = Math.min(L.w / 2, vis.w * 0.44);
       const halfH = Math.min(L.h / 2, vis.h * 0.44);
@@ -814,6 +857,10 @@
       $('btnPlay').onclick = () => this.play(false);
       $('btnStop').onclick = () => this.stop();
       $('btnRestart').onclick = () => { this.deaths = 0; this.resetGame(true); };
+      $('btnFloatStop').onclick = () => this.stop();
+      $('btnFloatRestart').onclick = () => { this.deaths = 0; this.resetGame(true); };
+      $('btnFullscreen').onclick = () => this.toggleFullscreenLandscape();
+      $('btnFloatFs').onclick = () => this.toggleFullscreenLandscape();
       $('btnWinReplay').onclick = () => { this.deaths = 0; this.resetGame(true); };
       $('btnWinEdit').onclick = () => this.stop();
       $('btnBrush').onclick = () => this.editor.setPaintMode('brush');
@@ -837,11 +884,13 @@
         this.syncToolButtons();
         this.toast(this.touchEnabled ? '🎮 虚拟触屏手柄已开启' : '🎮 虚拟触屏手柄已隐藏');
       };
-      $('btnBgm').onclick = () => {
+      const toggleBgm = () => {
         const on = PF.Audio.toggleBgm(this.mode === 'play', this.level.theme || 'meadow');
         this.syncToolButtons();
         this.toast(on ? '🎵 主题 BGM 已开启' : '🔇 主题 BGM 已静音');
       };
+      $('btnBgm').onclick = toggleBgm;
+      $('btnFloatBgm').onclick = toggleBgm;
 
       $('selTheme').onchange = (e) => {
         const next = PF.cloneLevel(this.level);

@@ -54,6 +54,7 @@
     </div>
 
     <div class="group right-tools">
+      <button id="btnFullscreen" title="全屏 / 锁定横屏体验">⛶ 全屏</button>
       <button id="btnBgm" class="toggle active" title="开关程序化主题 BGM">🎵 音乐</button>
     </div>
   </header>
@@ -68,6 +69,14 @@
         <span class="hud-pill dash-ready" id="hudDash">⚡ 冲刺就绪</span>
         <span class="hud-pill switch-on hidden" id="hudSwitch">🔴 ON</span>
         <span class="hud-pill pb hidden" id="hudPb">🏆 最快 --</span>
+      </div>
+
+      <!-- 手机横屏试玩悬浮极简控制条（让 3D 画面 100% 铺满全屏） -->
+      <div id="floatPlayBar" class="hidden">
+        <button id="btnFloatRestart" title="从头重来">↻</button>
+        <button id="btnFloatFs" title="全屏/横屏">⛶</button>
+        <button id="btnFloatBgm" class="toggle active" title="音乐开关">🎵</button>
+        <button id="btnFloatStop" class="primary" title="返回编辑">■ 编辑</button>
       </div>
 
       <div id="playTip" class="hidden">
