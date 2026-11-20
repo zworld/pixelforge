@@ -73,7 +73,7 @@
       const THREE = G.THREE;
       if (!this.gl) {
         this.gl = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-        this.gl.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+        this.gl.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
         this.gl.shadowMap.enabled = true;
         this.gl.shadowMap.type = THREE.PCFSoftShadowMap;
         this.gl.toneMapping = THREE.ACESFilmicToneMapping;

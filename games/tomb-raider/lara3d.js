@@ -1,20 +1,10 @@
-/* 古墓丽影 · 秘鲁遗迹 — 3A 级有机雕塑骨骼建模（Lathe/Capsule 曲面劳拉 + 攀岩斧/背带背包/四节甩辫 + 鳞片法线霸王龙/雪狼/巨熊） */
+/* 古墓丽影 · 秘鲁遗迹 — 拟人化高模骨骼角色（GLB 写实人体劳拉 + 动作捕捉待机/奔跑/双枪/攀爬/翻滚 + Khronos 写实动态雪狼 + 鳞甲法线霸王龙） */
 (function (G) {
   'use strict';
   const TR = (G.TR = G.TR || {});
-  const PBR = G.Studio && G.Studio.PBR;
-
-  const canvasCache = new Map();
-  function makeCanvasTex(key, drawFn) {
-    let c = canvasCache.get(key);
-    if (!c) {
-      c = drawFn();
-      canvasCache.set(key, c);
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  }
+  const Studio = G.Studio;
+  const PBR = Studio && Studio.PBR;
+  const Assets = Studio && Studio.Assets3D;
 
   function enableShadows(root) {
     root.traverse((obj) => {
@@ -25,159 +15,356 @@
     });
   }
 
-  /** 512×512 电影感劳拉面部手绘贴图（立体光影肤质、弯眉、多层虹膜高光、自然唇彩） */
-  function makeLaraFaceTex() {
-    return makeCanvasTex('lara_face_512', () => {
-      const c = document.createElement('canvas');
-      c.width = 512;
-      c.height = 512;
-      const ctx = c.getContext('2d');
-
-      const hair = '#3e1f11';
-      ctx.fillStyle = hair;
-      ctx.fillRect(0, 0, 512, 512);
-
-      // 健康阳光肌底 + 柔和面部明暗过渡
-      const g = ctx.createRadialGradient(256, 252, 22, 256, 268, 114);
-      g.addColorStop(0, '#fae0c8');
-      g.addColorStop(0.68, '#e3b28e');
-      g.addColorStop(1, '#b57e5e');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.ellipse(256, 272, 88, 124, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 颊侧自然微红与阴影立体感
-      for (const cx of [214, 298]) {
-        const bg = ctx.createRadialGradient(cx, 304, 4, cx, 304, 24);
-        bg.addColorStop(0, 'rgba(220, 112, 108, 0.25)');
-        bg.addColorStop(1, 'rgba(220, 112, 108, 0)');
-        ctx.fillStyle = bg;
-        ctx.beginPath();
-        ctx.arc(cx, 304, 24, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 分层刘海发际线（高额留白，完整展露眉眼）
-      ctx.fillStyle = hair;
-      ctx.beginPath();
-      ctx.moveTo(148, 96);
-      ctx.lineTo(364, 96);
-      ctx.lineTo(364, 174);
-      ctx.quadraticCurveTo(312, 140, 264, 168);
-      ctx.quadraticCurveTo(256, 152, 248, 168);
-      ctx.quadraticCurveTo(200, 140, 148, 174);
-      ctx.closePath();
-      ctx.fill();
-
-      // 细腻眉弓与英气挑眉
-      ctx.strokeStyle = '#33170b';
-      ctx.lineWidth = 5.2;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(206, 236);
-      ctx.quadraticCurveTo(226, 222, 246, 232);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(306, 236);
-      ctx.quadraticCurveTo(286, 222, 266, 232);
-      ctx.stroke();
-
-      // 精细琥珀棕眼眸（眼眶微影 + 眼白 + 双层虹膜 + 瞳孔 + 双星高光 + 睫毛线）
-      for (const s of [-1, 1]) {
-        const ex = 256 + s * 29;
-        const ey = 264;
-        ctx.fillStyle = 'rgba(130, 82, 58, 0.24)';
-        ctx.beginPath();
-        ctx.ellipse(ex, ey - 3, 18, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#fffaf6';
-        ctx.beginPath();
-        ctx.ellipse(ex, ey, 15.2, 10.2, s * 0.05, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#5c2d14';
-        ctx.beginPath();
-        ctx.arc(ex, ey, 8.8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#8b4e27';
-        ctx.beginPath();
-        ctx.arc(ex, ey + 1, 6.2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#0d0d10';
-        ctx.beginPath();
-        ctx.arc(ex, ey, 4.2, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(ex + 3.2, ey - 3.0, 3.0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(ex - 2.6, ey + 2.6, 1.4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = '#1c1410';
-        ctx.lineWidth = 4.4;
-        ctx.beginPath();
-        ctx.moveTo(ex - s * 15.8, ey + 0.5);
-        ctx.quadraticCurveTo(ex, ey - 13.4, ex + s * 16.8, ey - 3.6);
-        ctx.stroke();
-      }
-
-      // 鼻梁高光与鼻翼微影
-      ctx.strokeStyle = 'rgba(128, 80, 56, 0.36)';
-      ctx.lineWidth = 3.2;
-      ctx.beginPath();
-      ctx.moveTo(256, 270);
-      ctx.lineTo(253, 298);
-      ctx.lineTo(262, 300);
-      ctx.stroke();
-
-      // 立体自然玫瑰唇色
-      ctx.fillStyle = '#c45b61';
-      ctx.beginPath();
-      ctx.moveTo(238, 328);
-      ctx.quadraticCurveTo(256, 318, 274, 328);
-      ctx.quadraticCurveTo(256, 343, 238, 328);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255, 220, 220, 0.32)';
-      ctx.beginPath();
-      ctx.ellipse(256, 332, 8, 2.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      return c;
-    });
+  /** 构建精细金属 9mm 经典双枪（枪管沿局部 +Y 延伸，直接对齐 ReadyPlayerMe 手骨前指方向！） */
+  function buildPistolMesh() {
+    const g = new THREE.Group();
+    const slideMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.92, roughness: 0.16 });
+    const gripMat = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.72, metalness: 0.2 });
+    // 握把沿局部 -Z（贴掌心），枪管沿局部 +Y（随手臂笔直向前指！）
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.055, 0.105), gripMat);
+    grip.position.set(0, 0.03, -0.02);
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.22, 0.048), slideMat);
+    slide.position.set(0, 0.12, 0.035);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.24, 8), gripMat);
+    barrel.position.set(0, 0.13, 0.038);
+    const flash = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.11, 0),
+      new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.96 })
+    );
+    flash.scale.set(0.95, 2.4, 0.95);
+    flash.position.set(0, 0.29, 0.038);
+    flash.visible = false;
+    g.add(slide, barrel, grip, flash);
+    g.userData.flash = flash;
+    return g;
   }
 
-  /** 劳拉青绿罗纹针织战术背心 PBR 材质组（Albedo + Normal + Roughness） */
-  function makeTealFabricPBR() {
-    if (!PBR) return { color: 0x139ea6, roughness: 0.62 };
-    const maps = PBR.makePBRTextures('lara_teal_pbr', 256, (a, h, r, s) => {
-      a.fillStyle = '#13969e';
-      a.fillRect(0, 0, s, s);
-      h.fillStyle = '#808080';
-      h.fillRect(0, 0, s, s);
-      r.fillStyle = '#b8b8b8';
-      r.fillRect(0, 0, s, s);
-      for (let x = 0; x < s; x += 6) {
-        a.fillStyle = x % 12 === 0 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)';
-        a.fillRect(x, 0, 3, s);
-        h.fillStyle = x % 12 === 0 ? '#a8a8a8' : '#585858';
-        h.fillRect(x, 0, 3, s);
-      }
-      // 针脚接缝与磨损污渍层次（《暗影/崛起》探险质感）
-      a.fillStyle = 'rgba(84, 62, 42, 0.14)';
-      for (let i = 0; i < 24; i++) {
-        a.beginPath();
-        a.arc((i * 47) % s, s - 28 + (i % 5) * 6, 12 + (i % 4) * 5, 0, Math.PI * 2);
-        a.fill();
-      }
-    }, { normalStrength: 1.6 });
-    return { ...maps, roughness: 0.78, metalness: 0.04, normalScale: new THREE.Vector2(0.55, 0.55) };
+  /** 构建挂在真实人体 Spine2 背骨上的经典探险皮革背包 + 腰间攀岩斧 */
+  function buildExplorerGear() {
+    const leatherMat = new THREE.MeshStandardMaterial({ color: 0x462313, roughness: 0.55, metalness: 0.2 });
+    const buckleMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.90, roughness: 0.22 });
+    const ropeMat = new THREE.MeshStandardMaterial({ color: 0x9b7a4c, roughness: 0.85 });
+    const steelMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.92, roughness: 0.2 });
+
+    const pack = new THREE.Group();
+    const packBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.30, 0.125), leatherMat);
+    const packFlap = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.10, 0.135), leatherMat);
+    packFlap.position.y = 0.10;
+    const packBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.048, 0.03), buckleMat);
+    packBuckle.position.set(0, 0.045, -0.068);
+    const ropeCoil = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 10), ropeMat);
+    ropeCoil.rotation.z = Math.PI * 0.5;
+    ropeCoil.position.set(0, -0.16, 0);
+    // 挂在背包一侧的登山攀岩镐
+    const axe = new THREE.Group();
+    axe.position.set(0.15, -0.14, -0.02);
+    axe.rotation.set(0.15, 0.2, -0.45);
+    const axeHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.32, 8), new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.5 }));
+    const axePick = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.018), steelMat);
+    axePick.position.y = 0.14;
+    axe.add(axeHandle, axePick);
+    pack.add(packBody, packFlap, packBuckle, ropeCoil, axe);
+    enableShadows(pack);
+    return pack;
   }
 
-  /** 史前霸王龙鳞片虎纹 PBR 材质组（带凹凸法线鳞甲与皮肤粗糙度变化！） */
+  /**
+   * 构建极致拟人化写实劳拉 (Lara Croft)：
+   * 采用 16,467 面 ReadyPlayerMe 高模健美写实女性骨骼模型（独立写实眼球/自然裸妆面容/法线衣褶/栗色秀发），
+   * 驱动官方女性动作捕捉动画库（F_Idle / F_Walk / F_Run / F_Fall），
+   * 并在真实手骨与脊柱背骨上装配 9mm 双枪、皮革探险背包、登山攀岩斧与翡翠照明弹！
+   */
+  TR.createLaraRig = function () {
+    const root = new THREE.Group();
+    const rig = new THREE.Group();
+    root.add(rig);
+
+    const flareLight = new THREE.PointLight(0x4ade80, 0, 16);
+    flareLight.position.set(0, 1.35, -0.45);
+    const gunLight = new THREE.PointLight(0xfef08a, 0, 9.0);
+    gunLight.position.set(0, 1.35, -0.68);
+    // 电影级柔和主角轮廓补光（让劳拉在深邃古墓中也能清晰展现写实面容、发丝与装备金属细节！）
+    const heroFillLight = new THREE.PointLight(0xfff1dc, 1.85, 8.5);
+    heroFillLight.position.set(0.45, 2.05, -1.65);
+    const heroBackRim = new THREE.PointLight(0xbae6fd, 0.95, 6.5);
+    heroBackRim.position.set(-0.55, 1.85, 1.55);
+    root.add(flareLight, gunLight, heroFillLight, heroBackRim);
+
+    const placeholder = new THREE.Group();
+    const phMat = new THREE.MeshStandardMaterial({ color: 0x139ea6, roughness: 0.6 });
+    const phBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 1.2, 6, 10), phMat);
+    phBody.position.y = 0.85;
+    placeholder.add(phBody);
+    rig.add(placeholder);
+
+    const stateData = {
+      rig,
+      placeholder,
+      flareLight,
+      gunLight,
+      loaded: false,
+      modelRoot: null,
+      mixer: null,
+      actions: {},
+      activeActionName: null,
+      bones: {},
+      pistolL: null,
+      pistolR: null,
+      flareMesh: null,
+      runPhase: 0,
+    };
+    root.userData = stateData;
+
+    if (Assets) {
+      Promise.all([
+        Assets.loadGLTF('assets/models/lara_rpm.glb'),
+        Assets.loadRPMClips('F'),
+      ])
+        .then(([gltf, clips]) => {
+          const model = Assets.cloneSkinned(gltf);
+
+          // 定制劳拉写实材质：自然无浓妆面容 + 栗棕发色 + 经典青灰探险背心（保留 100% 真实 3D 法线与粗糙度贴图！）
+          const cleanFace = Assets.getCleanFemaleFace('lara');
+          const laraOutfit = Assets.makeClothTexture('lara_top');
+          model.traverse((obj) => {
+            if (!obj.isMesh || !obj.material) return;
+            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+            for (const m of mats) {
+              const mn = (m.name || '').toLowerCase();
+              const on = (obj.name || '').toLowerCase();
+              if (mn.includes('skin') || on.includes('wolf3d_head')) {
+                m.map = cleanFace;
+                m.roughness = 0.56;
+                m.metalness = 0.02;
+                m.needsUpdate = true;
+              } else if (mn.includes('hair') || on.includes('hair')) {
+                m.color.setHex(0x3b2214);
+                m.roughness = 0.52;
+              } else if (mn.includes('outfit_top') || on.includes('outfit_top')) {
+                m.map = laraOutfit;
+                m.color.setHex(0xffffff);
+                m.roughness = 0.72;
+                m.needsUpdate = true;
+              } else if (mn.includes('outfit_bottom') || on.includes('outfit_bottom')) {
+                // 经典古墓探险深橄榄棕工装长裤（保留 100% pants-adventure-01 真实褶皱与口袋 3D 法线！）
+                m.color.setHex(0x4f4e3c);
+                m.roughness = 0.80;
+              } else if (mn.includes('footwear') || on.includes('footwear')) {
+                m.color.setHex(0x3a281d);
+                m.roughness = 0.70;
+              } else if (mn.includes('body') || on.includes('wolf3d_body')) {
+                // 健康自然的探险家肌肤质感
+                m.roughness = 0.58;
+              } else if (mn.includes('eye')) {
+                m.roughness = 0.14;
+                m.metalness = 0.05;
+              }
+            }
+          });
+
+          // 绑定 ReadyPlayerMe 官方女性动作捕捉库（Idle / Walk / Run / Fall）
+          const mixer = new THREE.AnimationMixer(model);
+          const actions = {};
+          for (const [clipName, clip] of Object.entries(clips || {})) {
+            actions[clipName] = mixer.clipAction(clip);
+          }
+
+          const initAct = actions.Idle || Object.values(actions)[0];
+          if (initAct) {
+            initAct.reset().play();
+            mixer.update(0.01);
+            stateData.activeActionName = 'Idle';
+          }
+
+          // 归一化至标准探险家身高 1.74m，并旋转 180° 面向游戏本地 -Z 前方（背对镜头望向遗迹！）
+          const { holder } = Assets.normalizeRig(model, 1.74, Math.PI);
+          rig.remove(placeholder);
+          rig.add(holder);
+
+          const bones = {
+            hips: Assets.findBone(model, 'Hips'),
+            spine2: Assets.findBone(model, 'Spine2') || Assets.findBone(model, 'Spine1'),
+            head: Assets.findBone(model, 'Head'),
+            leftArm: Assets.findBone(model, 'LeftArm'),
+            leftForeArm: Assets.findBone(model, 'LeftForeArm'),
+            leftHand: Assets.findBone(model, 'LeftHand'),
+            rightArm: Assets.findBone(model, 'RightArm'),
+            rightForeArm: Assets.findBone(model, 'RightForeArm'),
+            rightHand: Assets.findBone(model, 'RightHand'),
+          };
+
+          const getCompScale = (bone) => {
+            if (!bone) return 1;
+            const ws = new THREE.Vector3();
+            bone.getWorldScale(ws);
+            return ws.y > 0.0001 ? 1 / ws.y : 1;
+          };
+
+          // 挂载 9mm 双枪至真实左右手骨（枪管沿局部 +Y 与前伸手臂完全同轴！）
+          const pistolL = buildPistolMesh();
+          const pistolR = buildPistolMesh();
+          const flareMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.018, 0.018, 0.24, 8),
+            new THREE.MeshBasicMaterial({ color: 0x4ade80 })
+          );
+          if (bones.leftHand) {
+            const sc = getCompScale(bones.leftHand);
+            pistolL.scale.setScalar(sc);
+            pistolL.position.set(0, 0.04 * sc, 0.02 * sc);
+            pistolL.visible = false;
+            bones.leftHand.add(pistolL);
+
+            flareMesh.scale.setScalar(sc);
+            flareMesh.position.set(0, 0.09 * sc, 0.02 * sc);
+            flareMesh.visible = false;
+            bones.leftHand.add(flareMesh);
+          }
+          if (bones.rightHand) {
+            const sc = getCompScale(bones.rightHand);
+            pistolR.scale.setScalar(sc);
+            pistolR.position.set(0, 0.04 * sc, 0.02 * sc);
+            pistolR.visible = false;
+            bones.rightHand.add(pistolR);
+          }
+
+          // 挂载探险皮革背包与攀岩斧到背部 Spine2（RPM 角色原生朝向 +Z，因此背侧是 -Z！）
+          if (bones.spine2) {
+            const sc = getCompScale(bones.spine2);
+            const gear = buildExplorerGear();
+            gear.scale.setScalar(sc);
+            gear.position.set(0, 0.02 * sc, -0.155 * sc);
+            bones.spine2.add(gear);
+          }
+
+          stateData.modelRoot = model;
+          stateData.mixer = mixer;
+          stateData.actions = actions;
+          stateData.bones = bones;
+          stateData.pistolL = pistolL;
+          stateData.pistolR = pistolR;
+          stateData.flareMesh = flareMesh;
+          stateData.loaded = true;
+        })
+        .catch((err) => {
+          console.warn('Lara GLB load fallback:', err);
+        });
+    }
+
+    return root;
+  };
+
+  /** 平滑切播写实人体骨骼动作捕捉片段 */
+  function playClip(ud, clipName, timeScale = 1.0) {
+    if (!ud.actions || !ud.actions[clipName]) return;
+    const next = ud.actions[clipName];
+    next.setEffectiveTimeScale(timeScale);
+    if (ud.activeActionName === clipName) return;
+    const prev = ud.activeActionName ? ud.actions[ud.activeActionName] : null;
+    next.reset().setEffectiveWeight(1).play();
+    if (prev && prev !== next) {
+      next.crossFadeFrom(prev, 0.16, false);
+    }
+    ud.activeActionName = clipName;
+  }
+
+  const _aimDirL = new THREE.Vector3();
+  const _aimDirR = new THREE.Vector3();
+
+  /** 驱动高模写实劳拉动作（官方动捕 Idle/Walk/Run/Fall + 精准矢量骨骼双枪瞄准/抓崖/推石/360° 体操空翻！） */
+  TR.animateLara = function (mesh, s, t, dt) {
+    const ud = mesh.userData;
+    const spd = Math.hypot(s.vx, s.vz);
+    ud.runPhase += dt * (2.5 + spd * 1.9);
+
+    ud.gunLight.intensity = (s.muzzleL > 0 || s.muzzleR > 0) ? 7.5 : 0;
+    const flareOn = s.flareTimer > 0;
+    ud.flareLight.intensity = flareOn ? (3.4 + Math.sin(t * 22) * 0.45) : 0;
+
+    if (!ud.loaded || !ud.mixer) return;
+
+    // 1) 选择并平滑混合官方动作捕捉片段（修复使用 s.onGround，落地立即呈现自然写实待机/步行/奔跑！）
+    if (s.action === 'jump' || s.action === 'fall' || (!s.onGround && s.action !== 'hang' && s.action !== 'climb')) {
+      playClip(ud, ud.actions.Fall ? 'Fall' : 'Idle', 1.0);
+    } else if (s.action === 'push') {
+      playClip(ud, 'Walk', 0.85);
+    } else if (spd > 4.2) {
+      playClip(ud, 'Run', Math.max(0.95, Math.min(1.45, spd * 0.17)));
+    } else if (spd > 0.55) {
+      playClip(ud, 'Walk', Math.max(0.9, Math.min(1.5, spd * 0.35)));
+    } else {
+      playClip(ud, 'Idle', 1.0);
+    }
+    ud.mixer.update(dt);
+
+    // 2) 全身运动姿态（360° 空翻转滚 / 推石前倾 / 攀爬前倾）
+    let rigY = 0, rigPitch = 0, rigRoll = 0;
+    if (s.action === 'roll') {
+      const p = 1 - s.rollTimer / 0.36;
+      rigY = Math.sin(p * Math.PI) * 0.62;
+      if (s.rollKind === 'back') rigPitch = p * Math.PI * 2;
+      else if (s.rollKind === 'left') rigRoll = p * Math.PI * 2;
+      else if (s.rollKind === 'right') rigRoll = -p * Math.PI * 2;
+      else rigPitch = -p * Math.PI * 2;
+    } else if (s.action === 'push') {
+      rigPitch = -0.24;
+    } else if (s.action === 'climb') {
+      rigPitch = -0.20;
+    }
+
+    const k = Math.min(1, dt * 16);
+    ud.rig.position.y += (rigY - ud.rig.position.y) * k;
+    ud.rig.rotation.x = s.action === 'roll' ? rigPitch : ud.rig.rotation.x + (rigPitch - ud.rig.rotation.x) * k;
+    ud.rig.rotation.z = s.action === 'roll' ? rigRoll : ud.rig.rotation.z + (rigRoll - ud.rig.rotation.z) * k;
+
+    // 3) 精准矢量解算双臂指向（RPM 原生模型前方为 +Z，因此双臂直指 +Z 即正对劳拉视野前方！）
+    const gunsOut = s.weaponsDrawn && s.action !== 'hang' && s.action !== 'climb' && s.action !== 'push';
+    if (ud.pistolL) {
+      ud.pistolL.visible = gunsOut;
+      ud.pistolL.userData.flash.visible = s.muzzleL > 0;
+    }
+    if (ud.pistolR) {
+      ud.pistolR.visible = gunsOut;
+      ud.pistolR.userData.flash.visible = s.muzzleR > 0;
+    }
+    if (ud.flareMesh) {
+      ud.flareMesh.visible = flareOn && !gunsOut;
+    }
+
+    const { leftArm, rightArm, leftForeArm, rightForeArm } = ud.bones;
+    const mr = ud.modelRoot;
+    if (Assets && mr) {
+      if (s.action === 'hang') {
+        _aimDirL.set(0.08, 0.98, 0.16);
+        _aimDirR.set(-0.08, 0.98, 0.16);
+        Assets.aimBoneAlong(leftArm, _aimDirL, mr);
+        Assets.aimBoneAlong(rightArm, _aimDirR, mr);
+        if (leftForeArm) leftForeArm.quaternion.identity();
+        if (rightForeArm) rightForeArm.quaternion.identity();
+      } else if (s.action === 'push') {
+        _aimDirL.set(0.06, 0.08, 0.99);
+        _aimDirR.set(-0.06, 0.08, 0.99);
+        Assets.aimBoneAlong(leftArm, _aimDirL, mr);
+        Assets.aimBoneAlong(rightArm, _aimDirR, mr);
+        if (leftForeArm) leftForeArm.quaternion.identity();
+        if (rightForeArm) rightForeArm.quaternion.identity();
+      } else if (gunsOut) {
+        const recL = s.muzzleL > 0 ? 0.24 : 0.04;
+        const recR = s.muzzleR > 0 ? 0.24 : 0.04;
+        _aimDirL.set(-0.06, recL, 0.98);
+        _aimDirR.set(0.06, recR, 0.98);
+        Assets.aimBoneAlong(leftArm, _aimDirL, mr);
+        Assets.aimBoneAlong(rightArm, _aimDirR, mr);
+        if (leftForeArm) leftForeArm.quaternion.identity();
+        if (rightForeArm) rightForeArm.quaternion.identity();
+      } else if (flareOn) {
+        _aimDirL.set(0.18, 0.32, 0.92);
+        Assets.aimBoneAlong(leftArm, _aimDirL, mr);
+        if (leftForeArm) leftForeArm.quaternion.identity();
+      }
+    }
+  };
+
+  /** 史前霸王龙 512px PBR 鳞片法线材质 */
   function makeDinoPBR() {
     if (!PBR) return { color: 0x456224, roughness: 0.62 };
     const maps = PBR.makePBRTextures('trex_scales_pbr', 512, (a, h, r, s) => {
@@ -187,20 +374,16 @@
       g.addColorStop(1, '#9d824b');
       a.fillStyle = g;
       a.fillRect(0, 0, s, s);
-
       h.fillStyle = '#606060';
       h.fillRect(0, 0, s, s);
       r.fillStyle = '#a8a8a8';
       r.fillRect(0, 0, s, s);
-
-      // 深色史前虎斑纹
       a.fillStyle = 'rgba(18, 28, 9, 0.52)';
       for (let x = 22; x < s; x += 48) {
         a.beginPath();
         a.ellipse(x, 120 + (x % 3) * 45, 14, 110, 0.22, 0, Math.PI * 2);
         a.fill();
       }
-      // 密布立体爬行动物鳞片高度场与光泽变化
       for (let y = 0; y < s; y += 16) {
         const off = ((y / 16) % 2) * 8;
         for (let x = 0; x < s; x += 16) {
@@ -213,450 +396,83 @@
           a.beginPath();
           a.arc(x + off, y, 6.5, 0, Math.PI * 2);
           a.stroke();
-          r.fillStyle = (x + y) % 32 === 0 ? '#787878' : '#b8b8b8';
-          r.fillRect(x + off - 4, y - 4, 8, 8);
         }
       }
     }, { normalStrength: 3.0 });
-    return { ...maps, roughness: 0.72, metalness: 0.08, normalScale: new THREE.Vector2(1.1, 1.1) };
+    return { ...maps, roughness: 0.70, metalness: 0.08, normalScale: new THREE.Vector2(1.15, 1.15) };
   }
 
-  /** 野兽毛皮质感 PBR 贴图（雪狼 / 巨熊） */
   function makeFurPBR(key, baseHex, darkHex) {
     if (!PBR) return { color: baseHex, roughness: 0.85 };
     const maps = PBR.makePBRTextures('fur_' + key, 256, (a, h, r, s) => {
-      a.fillStyle = baseHex;
-      a.fillRect(0, 0, s, s);
-      h.fillStyle = '#707070';
-      h.fillRect(0, 0, s, s);
-      r.fillStyle = '#d8d8d8';
-      r.fillRect(0, 0, s, s);
+      a.fillStyle = baseHex; a.fillRect(0, 0, s, s);
+      h.fillStyle = '#707070'; h.fillRect(0, 0, s, s);
+      r.fillStyle = '#d8d8d8'; r.fillRect(0, 0, s, s);
       for (let i = 0; i < 600; i++) {
-        const x = (i * 53) % s;
-        const y = (i * 97) % s;
+        const x = (i * 53) % s, y = (i * 97) % s;
         a.strokeStyle = i % 3 === 0 ? darkHex : 'rgba(255,255,255,0.12)';
         a.lineWidth = 2;
-        a.beginPath();
-        a.moveTo(x, y);
-        a.lineTo(x + 2, y + 14);
-        a.stroke();
+        a.beginPath(); a.moveTo(x, y); a.lineTo(x + 2, y + 14); a.stroke();
         h.strokeStyle = i % 2 === 0 ? '#b4b4b4' : '#404040';
-        h.beginPath();
-        h.moveTo(x, y);
-        h.lineTo(x + 2, y + 14);
-        h.stroke();
+        h.beginPath(); h.moveTo(x, y); h.lineTo(x + 2, y + 14); h.stroke();
       }
     }, { normalStrength: 2.2 });
     return { ...maps, roughness: 0.88, metalness: 0.02, normalScale: new THREE.Vector2(0.85, 0.85) };
   }
 
-  /** 构建精细金属 9mm 经典双枪 */
-  function buildPistolMesh() {
-    const g = new THREE.Group();
-    const slideMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.92, roughness: 0.16 });
-    const gripMat = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.72, metalness: 0.2 });
-    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.048, 0.22), slideMat);
-    slide.position.set(0, 0.04, -0.08);
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.24, 8), gripMat);
-    barrel.rotation.x = Math.PI * 0.5;
-    barrel.position.set(0, 0.042, -0.09);
-    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.11, 0.052), gripMat);
-    grip.position.set(0, -0.02, 0);
-    grip.rotation.x = 0.24;
-    const flash = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.11, 0),
-      new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.96 })
-    );
-    flash.scale.set(0.95, 0.95, 2.4);
-    flash.position.set(0, 0.045, -0.25);
-    flash.visible = false;
-    g.add(slide, barrel, grip, flash);
-    g.userData.flash = flash;
-    return g;
-  }
-
-  /**
-   * 3A 级有机雕塑 18 关节劳拉·克劳馥 (Lara Croft) 模型
-   * 结合经典双枪/青绿背心/甩动长辫 + 现代重启版攀岩斧/皮革背带细节！
-   */
-  TR.createLaraRig = function () {
-    const root = new THREE.Group();
-
-    const tealMat = new THREE.MeshStandardMaterial(makeTealFabricPBR());
-    const shortsMat = new THREE.MeshStandardMaterial({ color: 0x9b7a4c, roughness: 0.78, metalness: 0.04 });
-    const leatherMat = new THREE.MeshStandardMaterial({ color: 0x462313, roughness: 0.52, metalness: 0.22 });
-    const buckleMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.90, roughness: 0.22 });
-    const steelMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.92, roughness: 0.20 });
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xebb994, roughness: 0.50, metalness: 0.02 });
-    const faceMat = new THREE.MeshStandardMaterial({ map: makeLaraFaceTex(), roughness: 0.48, metalness: 0.02 });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x3e1f11, roughness: 0.72, metalness: 0.08 });
-    const bootMat = new THREE.MeshStandardMaterial({ color: 0x361d10, roughness: 0.68, metalness: 0.12 });
-    const sockMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.85 });
-    const gloveMat = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.65, metalness: 0.12 });
-
-    const rig = new THREE.Group();
-    root.add(rig);
-
-    // ---- 1. 有机雕塑骨盆、卡其短裤、武装腰带、攀岩斧与双腿枪套 ----
-    const pelvis = new THREE.Group();
-    pelvis.position.y = 0.88;
-    rig.add(pelvis);
-
-    const hipProfile = [
-      new THREE.Vector2(0.145, -0.12),
-      new THREE.Vector2(0.168, -0.02),
-      new THREE.Vector2(0.155, 0.08),
-      new THREE.Vector2(0.132, 0.13),
-    ];
-    const hips = new THREE.Mesh(new THREE.LatheGeometry(hipProfile, 16), shortsMat);
-    hips.scale.set(1.12, 1, 0.82);
-    pelvis.add(hips);
-
-    // 武装皮带 + 铜扣 + 腰包 + 现代劳拉标志性腰间攀岩斧 (Climbing Axe)！
-    const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.156, 0.062, 16), leatherMat);
-    belt.position.y = 0.11;
-    belt.scale.set(1.12, 1, 0.84);
-    const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.066, 0.032), buckleMat);
-    buckle.position.set(0, 0.11, -0.138);
-    pelvis.add(belt, buckle);
-
-    for (const s of [-1, 1]) {
-      const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.085, 0.052), leatherMat);
-      pouch.position.set(s * 0.15, 0.09, -0.05);
-      pelvis.add(pouch);
-    }
-
-    // 攀岩斧挂于右侧后腰
-    const axeGrp = new THREE.Group();
-    axeGrp.position.set(0.14, 0.06, 0.11);
-    axeGrp.rotation.set(0.2, 0.3, -0.45);
-    const axeHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.34, 8), new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.5 }));
-    const axePick = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.032, 0.018), steelMat);
-    axePick.position.y = 0.15;
-    axeGrp.add(axeHandle, axePick);
-    pelvis.add(axeGrp);
-
-    // 无缝 CapsuleGeometry 双腿 + 大腿枪套 + 登山靴
-    const holsteredGuns = [];
-    const makeLeg = (side) => {
-      const hip = new THREE.Group();
-      hip.position.set(side * 0.112, -0.05, 0);
-
-      const shortLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.084, 0.076, 0.16, 12), shortsMat);
-      shortLeg.position.y = -0.06;
-      hip.add(shortLeg);
-
-      const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.064, 0.25, 6, 12), skinMat);
-      thigh.position.y = -0.24;
-      hip.add(thigh);
-
-      const strap = new THREE.Mesh(new THREE.TorusGeometry(0.068, 0.012, 6, 14), leatherMat);
-      strap.rotation.x = Math.PI * 0.5;
-      strap.position.y = -0.22;
-      const holster = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.155, 0.078), leatherMat);
-      holster.position.set(side * 0.074, -0.23, 0);
-      const holsteredPistol = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.092, 0.056), steelMat);
-      holsteredPistol.position.set(side * 0.080, -0.15, 0.01);
-      hip.add(strap, holster, holsteredPistol);
-      holsteredGuns.push(holsteredPistol);
-
-      const knee = new THREE.Group();
-      knee.position.y = -0.41;
-      const calf = new THREE.Mesh(new THREE.CapsuleGeometry(0.048, 0.20, 6, 12), skinMat);
-      calf.position.y = -0.13;
-      const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.054, 0.049, 0.072, 12), sockMat);
-      sock.position.y = -0.24;
-      const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.056, 0.16, 12), bootMat);
-      boot.position.y = -0.34;
-      const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.044, 0.12, 5, 10), bootMat);
-      foot.rotation.x = Math.PI * 0.5;
-      foot.position.set(0, -0.395, -0.045);
-      knee.add(calf, sock, boot, foot);
-      hip.add(knee);
-      return { hip, knee };
-    };
-
-    const legL = makeLeg(-1);
-    const legR = makeLeg(1);
-    pelvis.add(legL.hip, legR.hip);
-
-    // ---- 2. LatheGeometry 有机运动躯干 + 经典双肩背带小皮背包 ----
-    const torso = new THREE.Group();
-    torso.position.y = 0.12;
-    pelvis.add(torso);
-
-    const torsoProfile = [
-      new THREE.Vector2(0.132, 0.0),
-      new THREE.Vector2(0.124, 0.12),
-      new THREE.Vector2(0.152, 0.25),
-      new THREE.Vector2(0.184, 0.37),
-      new THREE.Vector2(0.172, 0.45),
-      new THREE.Vector2(0.085, 0.49),
-    ];
-    const upperBody = new THREE.Mesh(new THREE.LatheGeometry(torsoProfile, 18), tealMat);
-    upperBody.scale.set(1.12, 1, 0.80);
-    torso.add(upperBody);
-
-    const collarbone = new THREE.Mesh(new THREE.SphereGeometry(0.185, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.46), skinMat);
-    collarbone.position.y = 0.44;
-    collarbone.scale.set(1.16, 0.42, 0.74);
-    torso.add(collarbone);
-
-    // 双肩真皮背包带（绕过肩部，细节拉满！）
-    for (const s of [-1, 1]) {
-      const strap = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.015, 6, 14), leatherMat);
-      strap.position.set(s * 0.115, 0.36, 0.04);
-      strap.rotation.y = Math.PI * 0.5;
-      strap.scale.set(1.1, 1.35, 1);
-      torso.add(strap);
-    }
-
-    // 精致探险皮背包（含黄铜搭扣与底部绳卷）
-    const pack = new THREE.Group();
-    pack.position.set(0, 0.31, 0.185);
-    const packBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.29, 0.125), leatherMat);
-    const packFlap = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.10, 0.135), leatherMat);
-    packFlap.position.y = 0.10;
-    const packBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.048, 0.03), buckleMat);
-    packBuckle.position.set(0, 0.045, 0.068);
-    const ropeCoil = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 10), shortsMat);
-    ropeCoil.rotation.z = Math.PI * 0.5;
-    ropeCoil.position.set(0, -0.16, 0);
-    pack.add(packBody, packFlap, packBuckle, ropeCoil);
-    torso.add(pack);
-
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.058, 0.11, 12), skinMat);
-    neck.position.y = 0.52;
-    torso.add(neck);
-
-    // ---- 3. 头部 + 立体垂鬓 + 4 节珠链感物理甩动长麻花辫！ ----
-    const headPivot = new THREE.Group();
-    headPivot.position.y = 0.58;
-    torso.add(headPivot);
-
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.155, 22, 18), faceMat);
-    headMesh.scale.set(0.92, 1.07, 0.96);
-    headMesh.position.y = 0.13;
-    headMesh.rotation.y = Math.PI * 0.5;
-    headPivot.add(headMesh);
-
-    const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.164, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.48), hairMat);
-    hairCap.position.set(0, 0.16, 0.022);
-    hairCap.rotation.x = 0.58;
-    headPivot.add(hairCap);
-
-    // 两侧轻盈修饰脸颊的微卷发丝
-    for (const s of [-1, 1]) {
-      const lock = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.13, 5, 8), hairMat);
-      lock.position.set(s * 0.135, 0.08, -0.035);
-      lock.rotation.z = s * 0.12;
-      headPivot.add(lock);
-    }
-
-    // 4 节雕塑麻花辫（物理级联甩动！）
-    const makeBraidNode = (r, len) => {
-      const g = new THREE.Group();
-      const seg = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 5, 10), hairMat);
-      seg.position.y = -(len * 0.5 + r * 0.5);
-      g.add(seg);
-      return g;
-    };
-    const braid1 = makeBraidNode(0.038, 0.14);
-    braid1.position.set(0, 0.13, 0.155);
-    const braid2 = makeBraidNode(0.032, 0.14);
-    braid2.position.y = -0.17;
-    const braid3 = makeBraidNode(0.025, 0.14);
-    braid3.position.y = -0.16;
-    const hairTie = new THREE.Mesh(new THREE.TorusGeometry(0.024, 0.008, 6, 12), new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.4 }));
-    hairTie.rotation.x = Math.PI * 0.5;
-    hairTie.position.y = -0.02;
-    const braidTip = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.14, 8), hairMat);
-    braidTip.rotation.x = Math.PI;
-    braidTip.position.y = -0.17;
-    braid3.add(hairTie, braidTip);
-    braid2.add(braid3);
-    braid1.add(braid2);
-    headPivot.add(braid1);
-
-    // ---- 4. 无缝 CapsuleGeometry 双节臂 + 露指手套 + 经典双枪 + 翡翠照明弹 ----
-    const makeArm = (side) => {
-      const shoulder = new THREE.Group();
-      shoulder.position.set(side * 0.215, 0.43, 0);
-      const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.042, 0.20, 6, 10), skinMat);
-      upper.position.y = -0.13;
-      shoulder.add(upper);
-
-      const elbow = new THREE.Group();
-      elbow.position.y = -0.255;
-      const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.034, 0.19, 6, 10), skinMat);
-      fore.position.y = -0.125;
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.038, 10, 8), gloveMat);
-      hand.position.y = -0.255;
-      const pistol = buildPistolMesh();
-      pistol.position.set(0, -0.265, -0.03);
-      pistol.rotation.x = -Math.PI * 0.48;
-      pistol.visible = false;
-      elbow.add(fore, hand, pistol);
-      shoulder.add(elbow);
-      torso.add(shoulder);
-      return { shoulder, elbow, pistol };
-    };
-
-    const armL = makeArm(-1);
-    const armR = makeArm(1);
-
-    const flareMesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.018, 0.018, 0.22, 8),
-      new THREE.MeshBasicMaterial({ color: 0x4ade80 })
-    );
-    flareMesh.position.set(0, -0.265, -0.06);
-    flareMesh.visible = false;
-    armL.elbow.add(flareMesh);
-
-    const flareLight = new THREE.PointLight(0x4ade80, 0, 16);
-    flareLight.position.set(0, 1.35, -0.4);
-    root.add(flareLight);
-
-    const gunLight = new THREE.PointLight(0xfef08a, 0, 8.5);
-    gunLight.position.set(0, 1.35, -0.65);
-    root.add(gunLight);
-
-    enableShadows(rig);
-
-    root.userData = {
-      rig, pelvis, torso, headPivot,
-      braid1, braid2, braid3,
-      armL, armR, legL, legR,
-      holsteredGuns, flareMesh, flareLight, gunLight,
-      runPhase: 0,
-    };
-    return root;
-  };
-
-  /** 实时驱动劳拉 18 关节全身动作 */
-  TR.animateLara = function (mesh, s, t, dt) {
-    const ud = mesh.userData;
-    const spd = Math.hypot(s.vx, s.vz);
-    ud.runPhase += dt * (2.5 + spd * 1.95);
-    const rp = ud.runPhase;
-    const moveBlend = Math.min(1, spd / 5.5);
-
-    let rigPitch = 0, rigRoll = 0, rigY = 0;
-    let pelvisY = 0.88;
-    let torsoPitch = 0, torsoYaw = 0;
-    let lLegX = 0, rLegX = 0, lKnee = 0.08, rKnee = 0.08;
-    let lShX = 0.08, rShX = 0.08, lShZ = -0.14, rShZ = 0.14, lElX = 0.24, rElX = 0.24;
-
-    if (s.action === 'hang') {
-      pelvisY = 0.82;
-      const shim = Math.sin(t * 10) * (Math.abs(s.vx) + Math.abs(s.vz) > 0.05 ? 0.18 : 0.03);
-      lShX = 2.95 + shim; rShX = 2.95 - shim;
-      lShZ = -0.22; rShZ = 0.22;
-      lElX = 0.18; rElX = 0.18;
-      lLegX = 0.22; rLegX = 0.12;
-      lKnee = -0.45; rKnee = -0.35;
-    } else if (s.action === 'climb') {
-      pelvisY = 0.88;
-      torsoPitch = -0.42;
-      lShX = 1.4; rShX = 1.4; lElX = 0.8; rElX = 0.8;
-      lLegX = 0.85; rLegX = -0.2; lKnee = -1.1; rKnee = -0.4;
-    } else if (s.action === 'roll') {
-      const p = 1 - s.rollTimer / 0.36;
-      rigY = Math.sin(p * Math.PI) * 0.65;
-      if (s.rollKind === 'back') rigPitch = p * Math.PI * 2;
-      else if (s.rollKind === 'left') rigRoll = p * Math.PI * 2;
-      else if (s.rollKind === 'right') rigRoll = -p * Math.PI * 2;
-      else rigPitch = -p * Math.PI * 2;
-      lLegX = 0.65; rLegX = 0.65; lKnee = -1.2; rKnee = -1.2;
-      lShX = 1.1; rShX = 1.1;
-    } else if (s.action === 'push') {
-      pelvisY = 0.78;
-      torsoPitch = -0.46;
-      lShX = 1.45; rShX = 1.45; lShZ = -0.1; rShZ = 0.1;
-      lElX = 0.15; rElX = 0.15;
-      lLegX = Math.sin(t * 7) * 0.45;
-      rLegX = -Math.sin(t * 7) * 0.45;
-      lKnee = -0.45; rKnee = -0.45;
-    } else if (s.action === 'lever' || s.leverTimer > 0) {
-      torsoPitch = -0.15;
-      rShX = 2.2 - (1 - s.leverTimer / 0.5) * 1.6;
-      rElX = 0.3;
-    } else if (!s.onGround) {
-      torsoPitch = -0.16;
-      lLegX = 0.62; rLegX = -0.48;
-      lKnee = -0.78; rKnee = -0.45;
-      lShX = 1.05; rShX = 0.85; lShZ = -0.35; rShZ = 0.35;
-    } else if (moveBlend > 0.08) {
-      pelvisY = 0.86 + Math.abs(Math.sin(rp)) * 0.055 * moveBlend;
-      torsoPitch = -0.14 * moveBlend;
-      torsoYaw = Math.sin(rp) * 0.14 * moveBlend;
-      lLegX = Math.sin(rp) * 0.78 * moveBlend;
-      rLegX = -Math.sin(rp) * 0.78 * moveBlend;
-      lKnee = -Math.max(0, -Math.cos(rp)) * 0.95 * moveBlend - 0.10;
-      rKnee = -Math.max(0, Math.cos(rp)) * 0.95 * moveBlend - 0.10;
-      lShX = -Math.sin(rp) * 0.68 * moveBlend;
-      rShX = Math.sin(rp) * 0.68 * moveBlend;
-      lElX = 0.55; rElX = 0.55;
-    } else {
-      pelvisY = 0.88 + Math.sin(t * 2.4) * 0.015;
-      lShX = 0.05; rShX = 0.05;
-      lElX = 0.22; rElX = 0.22;
-    }
-
-    const gunsOut = s.weaponsDrawn && s.action !== 'hang' && s.action !== 'climb' && s.action !== 'push';
-    if (gunsOut) {
-      const recoilL = s.muzzleL > 0 ? 0.26 : 0;
-      const recoilR = s.muzzleR > 0 ? 0.26 : 0;
-      lShX = 1.52 + recoilL; rShX = 1.52 + recoilR;
-      lShZ = -0.07; rShZ = 0.07;
-      lElX = 0.08; rElX = 0.08;
-    }
-
-    ud.armL.pistol.visible = gunsOut;
-    ud.armR.pistol.visible = gunsOut;
-    ud.armL.pistol.userData.flash.visible = s.muzzleL > 0;
-    ud.armR.pistol.userData.flash.visible = s.muzzleR > 0;
-    for (const hg of ud.holsteredGuns) hg.visible = !gunsOut;
-
-    ud.gunLight.intensity = (s.muzzleL > 0 || s.muzzleR > 0) ? 7.0 : 0;
-    const flareOn = s.flareTimer > 0;
-    ud.flareMesh.visible = flareOn && !gunsOut;
-    ud.flareLight.intensity = flareOn ? (3.2 + Math.sin(t * 22) * 0.45) : 0;
-
-    const k = Math.min(1, dt * 18);
-    ud.rig.position.y += (rigY - ud.rig.position.y) * k;
-    ud.rig.rotation.x = s.action === 'roll' ? rigPitch : ud.rig.rotation.x * (1 - k);
-    ud.rig.rotation.z = s.action === 'roll' ? rigRoll : ud.rig.rotation.z * (1 - k);
-    ud.pelvis.position.y += (pelvisY - ud.pelvis.position.y) * k;
-    ud.torso.rotation.x += (torsoPitch - ud.torso.rotation.x) * k;
-    ud.torso.rotation.y += (torsoYaw - ud.torso.rotation.y) * k;
-
-    ud.legL.hip.rotation.x += (lLegX - ud.legL.hip.rotation.x) * k;
-    ud.legR.hip.rotation.x += (rLegX - ud.legR.hip.rotation.x) * k;
-    ud.legL.knee.rotation.x += (lKnee - ud.legL.knee.rotation.x) * k;
-    ud.legR.knee.rotation.x += (rKnee - ud.legR.knee.rotation.x) * k;
-
-    ud.armL.shoulder.rotation.x += (lShX - ud.armL.shoulder.rotation.x) * k;
-    ud.armR.shoulder.rotation.x += (rShX - ud.armR.shoulder.rotation.x) * k;
-    ud.armL.shoulder.rotation.z += (lShZ - ud.armL.shoulder.rotation.z) * k;
-    ud.armR.shoulder.rotation.z += (rShZ - ud.armR.shoulder.rotation.z) * k;
-    ud.armL.elbow.rotation.x += (lElX - ud.armL.elbow.rotation.x) * k;
-    ud.armR.elbow.rotation.x += (rElX - ud.armR.elbow.rotation.x) * k;
-
-    const whip = 0.22 + moveBlend * 0.62 + (s.action === 'jump' ? 0.48 : 0);
-    ud.braid1.rotation.x = whip + Math.sin(rp) * 0.14;
-    ud.braid1.rotation.z = Math.cos(rp * 0.5) * 0.24 * (0.3 + moveBlend);
-    ud.braid2.rotation.x = 0.16 + Math.sin(rp - 0.8) * 0.24;
-    ud.braid2.rotation.z = Math.cos(rp * 0.5 - 0.8) * 0.30 * (0.3 + moveBlend);
-    ud.braid3.rotation.x = 0.18 + Math.sin(rp - 1.5) * 0.34;
-  };
-
-  /**
-   * 3A 级有机雕塑掠食者与霸王龙 Boss（彻底告别方块恐龙与圆柱狼！）
-   */
+  /** 构建掠食者：雪狼采用 Khronos 写实骨骼 Fox.glb（银灰雪狼涂装 + 原生奔跑动画），巨熊与霸王龙采用 3A 有机雕塑骨骼 */
   TR.createEnemyRig = function (e) {
     const root = new THREE.Group();
 
+    // ---- 1) 秘鲁雪狼：加载官方 Khronos 高模写实骨骼 Fox.glb 并调色为银灰安第斯雪狼！ ----
+    if (e.kind === 'wolf' && Assets) {
+      const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.10), new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide }));
+      hpBg.position.y = 1.38;
+      const hpFill = new THREE.Mesh(new THREE.PlaneGeometry(0.90, 0.06), new THREE.MeshBasicMaterial({ color: 0xf43f5e, side: THREE.DoubleSide }));
+      hpFill.position.z = 0.01;
+      hpBg.add(hpFill);
+      root.add(hpBg);
+
+      const ud = { kind: 'wolf_glb', hpBg, hpFill, mixer: null, actions: {}, activeName: null, mats: [], loaded: false };
+      root.userData = ud;
+
+      Assets.loadGLTF('assets/models/Fox.glb')
+        .then((gltf) => {
+          const model = Assets.cloneSkinned(gltf);
+          const mats = [];
+          const wolfTex = Assets.makeWolfFurTexture ? Assets.makeWolfFurTexture() : null;
+          model.traverse((obj) => {
+            if (obj.isMesh && obj.material) {
+              const m = obj.material;
+              // 替换为安第斯银灰雪狼毛皮贴图，呈现冷峻高原野狼质感！
+              if (wolfTex) {
+                m.map = wolfTex;
+                m.needsUpdate = true;
+              }
+              if (m.color) m.color.setHex(0xd8e2ec);
+              m.roughness = 0.84;
+              mats.push(m);
+            }
+          });
+          const mixer = new THREE.AnimationMixer(model);
+          const actions = {};
+          for (const clip of (gltf.animations || [])) actions[clip.name] = mixer.clipAction(clip);
+          const initAct = actions.Survey || Object.values(actions)[0];
+          if (initAct) { initAct.play(); mixer.update(0.01); ud.activeName = initAct.getClip().name; }
+
+          const { holder } = Assets.normalizeRig(model, 1.02, 0);
+          root.add(holder);
+          ud.mixer = mixer;
+          ud.actions = actions;
+          ud.mats = mats;
+          ud.loaded = true;
+        })
+        .catch((err) => console.warn('Wolf GLB fallback:', err));
+
+      return root;
+    }
+
+    // ---- 2) 史前霸王龙 Boss ----
     if (e.kind === 'trex') {
       const skinMat = new THREE.MeshStandardMaterial(makeDinoPBR());
       const bellyMat = new THREE.MeshStandardMaterial({ color: 0xa8925d, roughness: 0.78 });
@@ -669,22 +485,15 @@
       bodyPivot.position.y = 2.45;
       root.add(bodyPivot);
 
-      // LatheGeometry 流线肌肉躯干（宽厚胸廓 -> 强健臀胯）
       const bodyProfile = [
-        new THREE.Vector2(0.05, -1.9),
-        new THREE.Vector2(0.68, -1.55),
-        new THREE.Vector2(1.06, -0.75),
-        new THREE.Vector2(1.18, 0.2),
-        new THREE.Vector2(0.98, 1.15),
-        new THREE.Vector2(0.62, 1.72),
-        new THREE.Vector2(0.05, 1.85),
+        new THREE.Vector2(0.05, -1.9), new THREE.Vector2(0.68, -1.55), new THREE.Vector2(1.06, -0.75),
+        new THREE.Vector2(1.18, 0.2), new THREE.Vector2(0.98, 1.15), new THREE.Vector2(0.62, 1.72), new THREE.Vector2(0.05, 1.85),
       ];
       const torso = new THREE.Mesh(new THREE.LatheGeometry(bodyProfile, 18), skinMat);
       torso.rotation.x = Math.PI * 0.5;
       torso.scale.set(0.86, 1.0, 0.94);
       bodyPivot.add(torso);
 
-      // 背脊骨板
       for (let i = 0; i < 8; i++) {
         const scute = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.34, 5), ridgeMat);
         scute.position.set(0, 0.96 - Math.abs(i - 3) * 0.06, 1.3 - i * 0.42);
@@ -692,7 +501,6 @@
         bodyPivot.add(scute);
       }
 
-      // 强健弯曲巨颈 + 有机雕塑霸王龙巨颅（圆颅 + 狰狞眉脊 + 收窄吻部 + 16 枚尖锐白獠牙！）
       const neckPivot = new THREE.Group();
       neckPivot.position.set(0, 0.42, 1.55);
       const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.54, 0.95, 8, 14), skinMat);
@@ -702,25 +510,17 @@
 
       const headPivot = new THREE.Group();
       headPivot.position.set(0, 1.02, 0.86);
-
       const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.62, 16, 12), skinMat);
       cranium.scale.set(0.82, 0.88, 1.05);
       cranium.position.set(0, 0.22, 0.08);
-      headPivot.add(cranium);
-
-      // 流线收窄上吻部（非硬方块！）
       const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.52, 1.35, 12), skinMat);
       snout.rotation.x = Math.PI * 0.5;
       snout.scale.set(0.88, 1.0, 0.78);
       snout.position.set(0, 0.16, 0.85);
-      headPivot.add(snout);
-
-      // 口腔上腭红肉
       const palate = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.12, 1.15), mouthMat);
       palate.position.set(0, -0.08, 0.72);
-      headPivot.add(palate);
+      headPivot.add(cranium, snout, palate);
 
-      // 狰狞角状眉脊 + 琥珀爬行动物竖瞳眼 + 两排弯钩獠牙
       for (const s of [-1, 1]) {
         const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.34, 4, 8), ridgeMat);
         brow.position.set(s * 0.40, 0.48, 0.25);
@@ -730,7 +530,6 @@
         const pupil = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.16, 0.04), new THREE.MeshBasicMaterial({ color: 0x09090b }));
         pupil.position.set(s * 0.53, 0.32, 0.31);
         headPivot.add(brow, eye, pupil);
-
         for (let k = 0; k < 5; k++) {
           const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.22 - k * 0.015, 6), toothMat);
           tooth.rotation.x = Math.PI + 0.12;
@@ -739,7 +538,6 @@
         }
       }
 
-      // 可张合下颌 + 下排獠牙
       const jawPivot = new THREE.Group();
       jawPivot.position.set(0, -0.06, 0.06);
       const lowerJaw = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, 1.32, 10), bellyMat);
@@ -761,7 +559,6 @@
       neckPivot.add(headPivot);
       bodyPivot.add(neckPivot);
 
-      // 经典短小双趾前臂
       for (const s of [-1, 1]) {
         const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.48, 5, 8), skinMat);
         arm.position.set(s * 0.72, -0.38, 1.22);
@@ -769,7 +566,6 @@
         bodyPivot.add(arm);
       }
 
-      // 3 段强健收尖平衡巨尾
       const tail1 = new THREE.Group();
       tail1.position.set(0, 0.12, -1.65);
       const t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.66, 2.0, 12), skinMat);
@@ -785,7 +581,6 @@
       tail1.add(tail2);
       bodyPivot.add(tail1);
 
-      // 双足强健肌肉后腿 + 三趾巨爪
       const makeDinoLeg = (side) => {
         const hip = new THREE.Group();
         hip.position.set(side * 0.88, 2.25, -0.1);
@@ -818,30 +613,26 @@
       return root;
     }
 
-    // ---- 3A 有机雕塑雪狼 (wolf) 与古殿巨熊 (bear) ----
-    const isBear = e.kind === 'bear';
-    const sc = isBear ? 1.48 : 1.04;
-    const furMat = new THREE.MeshStandardMaterial(
-      isBear ? makeFurPBR('bear', '#5b3922', '#2d190c') : makeFurPBR('wolf', '#7c8b9c', '#334155')
-    );
-    const bellyMat = new THREE.MeshStandardMaterial({ color: isBear ? 0x7c5334 : 0xd8e1ea, roughness: 0.85 });
-    const eyeMat = new THREE.MeshBasicMaterial({ color: isBear ? 0xf97316 : 0xfde047 });
+    // ---- 3) 古殿巨熊 (bear) ----
+    const sc = 1.48;
+    const furMat = new THREE.MeshStandardMaterial(makeFurPBR('bear', '#5b3922', '#2d190c'));
+    const bellyMat = new THREE.MeshStandardMaterial({ color: 0x7c5334, roughness: 0.85 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
 
     const body = new THREE.Group();
     body.scale.setScalar(sc);
     body.position.y = 0.64 * sc;
     root.add(body);
 
-    // LatheGeometry 流线兽躯（宽阔胸肌 + 收束腰腹！）
-    const beastProfile = isBear
-      ? [new THREE.Vector2(0.04, -0.58), new THREE.Vector2(0.32, -0.40), new THREE.Vector2(0.36, 0.05), new THREE.Vector2(0.38, 0.35), new THREE.Vector2(0.24, 0.55), new THREE.Vector2(0.04, 0.62)]
-      : [new THREE.Vector2(0.04, -0.56), new THREE.Vector2(0.21, -0.38), new THREE.Vector2(0.18, -0.05), new THREE.Vector2(0.26, 0.28), new THREE.Vector2(0.22, 0.48), new THREE.Vector2(0.04, 0.56)];
+    const beastProfile = [
+      new THREE.Vector2(0.04, -0.58), new THREE.Vector2(0.32, -0.40), new THREE.Vector2(0.36, 0.05),
+      new THREE.Vector2(0.38, 0.35), new THREE.Vector2(0.24, 0.55), new THREE.Vector2(0.04, 0.62),
+    ];
     const torso = new THREE.Mesh(new THREE.LatheGeometry(beastProfile, 14), furMat);
     torso.rotation.x = Math.PI * 0.5;
     body.add(torso);
 
-    // 颈部蓬松鬃毛围领
-    const ruff = new THREE.Mesh(new THREE.SphereGeometry(isBear ? 0.32 : 0.24, 12, 10), bellyMat);
+    const ruff = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), bellyMat);
     ruff.position.set(0, 0.06, 0.38);
     ruff.scale.set(0.95, 1.05, 0.85);
     body.add(ruff);
@@ -849,40 +640,35 @@
     const head = new THREE.Group();
     head.position.set(0, 0.16, 0.56);
     const skull = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 10), furMat);
-    skull.scale.set(0.92, 0.90, 1.05);
-    const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.105, 0.26, 10), bellyMat);
+    const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.105, 0.24, 10), bellyMat);
     snout.rotation.x = Math.PI * 0.5;
     snout.position.set(0, -0.045, 0.20);
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.3 }));
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 6), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.3 }));
     nose.position.set(0, -0.02, 0.33);
     head.add(skull, snout, nose);
 
     for (const s of [-1, 1]) {
-      const ear = new THREE.Mesh(isBear ? new THREE.SphereGeometry(0.068, 8, 8) : new THREE.ConeGeometry(0.052, 0.16, 6), furMat);
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.068, 8, 8), furMat);
       ear.position.set(s * 0.12, 0.19, -0.02);
-      ear.rotation.z = -s * 0.18;
       const eye = new THREE.Mesh(new THREE.SphereGeometry(0.030, 8, 8), eyeMat);
       eye.position.set(s * 0.088, 0.045, 0.155);
       head.add(ear, eye);
     }
     body.add(head);
 
-    const tail = new THREE.Mesh(new THREE.CapsuleGeometry(isBear ? 0.06 : 0.055, isBear ? 0.08 : 0.42, 5, 8), bellyMat);
+    const tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.08, 5, 8), bellyMat);
     tail.position.set(0, 0.04, -0.66);
-    tail.rotation.x = Math.PI * 0.62;
     body.add(tail);
 
     const legs = [];
     for (const [lx, lz, back] of [[-0.17, 0.34, false], [0.17, 0.34, false], [-0.17, -0.34, true], [0.17, -0.34, true]]) {
       const leg = new THREE.Group();
       leg.position.set(lx, -0.06, lz);
-      const upper = new THREE.Mesh(new THREE.CapsuleGeometry(isBear ? 0.085 : 0.062, 0.24, 5, 8), furMat);
+      const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.24, 5, 8), furMat);
       upper.position.set(0, -0.15, back ? -0.04 : 0.02);
-      upper.rotation.x = back ? 0.28 : -0.08;
-      const lower = new THREE.Mesh(new THREE.CapsuleGeometry(isBear ? 0.068 : 0.044, 0.24, 5, 8), bellyMat);
+      const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.068, 0.24, 5, 8), bellyMat);
       lower.position.set(0, -0.40, back ? -0.02 : 0.02);
-      lower.rotation.x = back ? -0.22 : 0.06;
-      const paw = new THREE.Mesh(new THREE.SphereGeometry(isBear ? 0.075 : 0.052, 8, 6), furMat);
+      const paw = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), furMat);
       paw.scale.set(1, 0.6, 1.35);
       paw.position.set(0, -0.54, 0.04);
       leg.add(upper, lower, paw);
@@ -892,7 +678,6 @@
 
     enableShadows(root);
 
-    // 小怪头顶迷你血条（不投射阴影）
     const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.10), new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide }));
     hpBg.position.y = e.height + 0.38;
     const hpFill = new THREE.Mesh(new THREE.PlaneGeometry(0.90, 0.06), new THREE.MeshBasicMaterial({ color: 0xf43f5e, side: THREE.DoubleSide }));
@@ -900,14 +685,41 @@
     hpBg.add(hpFill);
     root.add(hpBg);
 
-    root.userData = { kind: e.kind, body, head, tail, legs, mainMat: furMat, hpBg, hpFill, stride: 0 };
+    root.userData = { kind: 'bear', body, head, tail, legs, mainMat: furMat, hpBg, hpFill, stride: 0 };
     return root;
   };
 
-  /** 实时驱动雪狼 / 巨熊 / 霸王龙动画 */
+  /** 实时驱动 GLB 写实雪狼 / 雕塑巨熊 / 霸王龙 Boss 动画 */
   TR.animateEnemy = function (mesh, e, t, dt, cameraPos) {
     const ud = mesh.userData;
     const spd = Math.hypot(e.vx || 0, e.vz || 0);
+
+    if (ud.kind === 'wolf_glb') {
+      if (ud.loaded && ud.mixer) {
+        const want = spd > 3.6 ? 'Run' : (spd > 0.4 ? 'Walk' : 'Survey');
+        if (ud.actions[want] && ud.activeName !== want) {
+          const prev = ud.activeName ? ud.actions[ud.activeName] : null;
+          ud.actions[want].reset().play();
+          if (prev) ud.actions[want].crossFadeFrom(prev, 0.18, false);
+          ud.activeName = want;
+        }
+        ud.mixer.update(dt * (want === 'Run' ? 1.35 : 1.0));
+        for (const m of ud.mats) {
+          if (m.emissive) {
+            m.emissive.setHex(e.hitFlash > 0 ? 0xfca5a5 : (e.state === 'windup' ? 0x991b1b : 0x000000));
+            m.emissiveIntensity = e.hitFlash > 0 ? 0.45 : (e.state === 'windup' ? 0.35 : 0);
+          }
+        }
+      }
+      if (ud.hpBg && ud.hpFill && cameraPos) {
+        ud.hpBg.lookAt(cameraPos);
+        const r = Math.max(0.01, e.hp / e.maxHp);
+        ud.hpFill.scale.x = r;
+        ud.hpFill.position.x = -(1 - r) * 0.45;
+      }
+      return;
+    }
+
     ud.stride += dt * (2.5 + spd * 1.8);
     ud.mainMat.emissive.setHex(e.hitFlash > 0 ? 0xfca5a5 : (e.state === 'windup' ? 0x991b1b : 0x000000));
     ud.mainMat.emissiveIntensity = e.hitFlash > 0 ? 0.35 : (e.state === 'windup' ? 0.30 : 0);
@@ -929,8 +741,7 @@
     ud.legs[1].rotation.x = -Math.sin(ud.stride) * 0.68 * moveB;
     ud.legs[2].rotation.x = -Math.sin(ud.stride) * 0.68 * moveB;
     ud.legs[3].rotation.x = Math.sin(ud.stride) * 0.68 * moveB;
-    ud.body.rotation.x = e.state === 'windup' ? (ud.kind === 'bear' ? -0.55 : -0.32) : (e.state === 'lunge' ? 0.22 : 0);
-    ud.tail.rotation.y = Math.sin(t * 7) * 0.28;
+    ud.body.rotation.x = e.state === 'windup' ? -0.55 : (e.state === 'lunge' ? 0.22 : 0);
 
     if (ud.hpBg && ud.hpFill && cameraPos) {
       ud.hpBg.lookAt(cameraPos);

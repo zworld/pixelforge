@@ -137,14 +137,23 @@
     ctx.arc(gx, gy, 130, 0, Math.PI * 2);
     ctx.fill();
 
-    // 流云霞带
-    ctx.fillStyle = cfg.cloudColor;
+    // 柔和羽化流云霞带（径向透明渐变，杜绝生硬椭圆色块）
     for (let i = 0; i < 14; i++) {
-      const cx = (i * 88) % 1024;
-      const cy = 210 + Math.sin(i * 1.4) * 48;
+      const cx = (i * 88 + 20) % 1024;
+      const cy = 210 + Math.sin(i * 1.4) * 44;
+      const rx = 115 + (i % 3) * 38;
+      const cg = ctx.createRadialGradient(cx, cy, 4, cx, cy, rx);
+      cg.addColorStop(0, cfg.cloudColor);
+      cg.addColorStop(0.55, cfg.cloudColor.replace(/0\.\d+/, '0.10'));
+      cg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1, 0.22);
+      ctx.fillStyle = cg;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, 95 + (i % 3) * 35, 16 + (i % 2) * 8, 0, 0, Math.PI * 2);
+      ctx.arc(0, 0, rx, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     }
 
     // 远景水墨群峰（两层景深叠加）
@@ -509,14 +518,28 @@
       rim.position.set(-cfg.sunPos[0], 14, 22);
       this.envGroup.add(rim);
 
-      // 3. 雕花汉白玉 / 青石莲花演武台
-      const floorTex = makeFloorTexture(cfg);
+      // 3. 实拍照片级 PBR 青石古台地面 + 悬浮发光八卦莲花阵纹！
+      const floorMat = Studio.Assets3D
+        ? Studio.Assets3D.createPhotoPBRMaterial(
+            themeId === 'xiangyang' ? 'large_sandstone_blocks' : 'seaworn_stone_tiles',
+            { color: themeId === 'valley' ? 0xcfb2bc : (themeId === 'xiangyang' ? 0xd2b59b : 0xb5c9d8), repeatX: 6, repeatY: 6, roughness: 0.72, normalScale: 1.35 }
+          )
+        : new THREE.MeshStandardMaterial({ map: makeFloorTexture(cfg), roughness: 0.64, metalness: 0.16 });
       const floor = new THREE.Mesh(
         new THREE.CylinderGeometry(radius + 0.8, radius + 1.8, 1.4, 48),
-        new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.64, metalness: 0.16 })
+        floorMat
       );
       floor.position.y = -0.7;
+      floor.receiveShadow = true;
       this.envGroup.add(floor);
+
+      const sigilRing = new THREE.Mesh(
+        new THREE.RingGeometry(4.2, 4.55, 48),
+        new THREE.MeshBasicMaterial({ color: cfg.accent, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+      );
+      sigilRing.rotation.x = -Math.PI / 2;
+      sigilRing.position.y = 0.03;
+      this.envGroup.add(sigilRing);
 
       // 汉白玉石栏与流光宫灯环绕
       const marbleMat = new THREE.MeshStandardMaterial({
@@ -594,20 +617,31 @@
 
       // ---- 四大章节仙剑风地标景观 + 活灵活现的 NPC ----
       if (themeId === 'tomb') {
-        // 活死人墓：汉白玉月洞门 + 发光晶莹寒玉床 + 白衣小龙女！
+        // 活死人墓：实拍冰纹汉白玉月洞门 + 晶莹法线寒玉床 + 白衣小龙女！
+        const jadeStoneMat = Studio.Assets3D
+          ? Studio.Assets3D.createPhotoPBRMaterial('seaworn_stone_tiles', {
+              color: 0xcbeeff, repeatX: 2, repeatY: 1, roughness: 0.24, metalness: 0.18,
+              emissive: 0x0284c7, emissiveIntensity: 0.34, normalScale: 1.15,
+            })
+          : new THREE.MeshStandardMaterial({ color: 0xe0f2fe, emissive: 0x0ea5e9, emissiveIntensity: 0.45, roughness: 0.18, metalness: 0.22 });
+        const archMat = Studio.Assets3D
+          ? Studio.Assets3D.createPhotoPBRMaterial('large_sandstone_blocks', {
+              color: 0xb8d4e8, repeatX: 4, repeatY: 1, roughness: 0.55, metalness: 0.10, normalScale: 1.3,
+            })
+          : marbleMat;
+
         const arch = new THREE.Mesh(
-          new THREE.TorusGeometry(4.8, 0.42, 12, 32, Math.PI),
-          marbleMat
+          new THREE.TorusGeometry(4.8, 0.46, 12, 32, Math.PI),
+          archMat
         );
         arch.position.set(0, 0.2, -(radius + 0.5));
         this.envGroup.add(arch);
 
-        const bed = new THREE.Mesh(
-          new THREE.BoxGeometry(4.6, 0.95, 2.3),
-          new THREE.MeshStandardMaterial({ color: 0xe0f2fe, emissive: 0x0ea5e9, emissiveIntensity: 0.55, roughness: 0.15, metalness: 0.25 })
-        );
-        bed.position.set(0, 0.48, -(radius - 2.2));
-        this.envGroup.add(bed);
+        const bed = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.92, 2.3), jadeStoneMat);
+        bed.position.set(0, 0.46, -(radius - 2.2));
+        const bedRim = new THREE.Mesh(new THREE.BoxGeometry(4.82, 0.16, 2.52), archMat);
+        bedRim.position.set(0, 0.08, -(radius - 2.2));
+        this.envGroup.add(bed, bedRim);
 
         const frostHalo = new THREE.Mesh(
           new THREE.RingGeometry(2.5, 3.4, 32),
@@ -700,7 +734,9 @@
         this.envGroup.add(this.condorRig.group);
       } else if (themeId === 'xiangyang') {
         // 襄阳城头：宋军城垛 + 双敌楼 + 飘扬战旗 + 青铜烽火盆 + 小龙女并肩观战！
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x6b5b52, roughness: 0.82 });
+        const wallMat = Studio.Assets3D
+          ? Studio.Assets3D.createPhotoPBRMaterial('large_sandstone_blocks', { color: 0x8f7a6d, repeatX: 1, repeatY: 1, roughness: 0.85, normalScale: 1.4 })
+          : new THREE.MeshStandardMaterial({ color: 0x6b5b52, roughness: 0.82 });
         for (let i = 0; i < 20; i++) {
           const a = (i / 20) * Math.PI * 2;
           const merlon = new THREE.Mesh(new THREE.BoxGeometry(1.85, 1.55, 0.72), wallMat);
@@ -709,22 +745,47 @@
           this.envGroup.add(merlon);
         }
 
-        const bannerMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0x991b1b, emissiveIntensity: 0.35, side: THREE.DoubleSide });
-        for (const sx of [-5.2, 5.2]) {
+        const fireTex = Studio.Assets3D && Studio.Assets3D.getFireSpriteTexture ? Studio.Assets3D.getFireSpriteTexture() : null;
+        const flagLabels = ['大宋', '襄阳'];
+        for (let idx = 0; idx < 2; idx++) {
+          const sx = idx === 0 ? -5.2 : 5.2;
           const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 8.6, 8), woodMat);
           pole.position.set(sx, 4.3, -(radius + 0.4));
           this.envGroup.add(pole);
+          const bTex = Studio.Assets3D && Studio.Assets3D.makeBannerTexture
+            ? Studio.Assets3D.makeBannerTexture(flagLabels[idx], '#991b1b', '#facc15')
+            : null;
+          const bannerMat = new THREE.MeshStandardMaterial({
+            color: bTex ? 0xffffff : 0xdc2626,
+            map: bTex || null,
+            emissive: 0x7f1d1d,
+            emissiveIntensity: 0.25,
+            roughness: 0.65,
+            side: THREE.DoubleSide,
+          });
           const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.85, 3.2), bannerMat);
           flag.position.set(sx + (sx < 0 ? 0.92 : -0.92), 6.4, -(radius + 0.4));
           this.envGroup.add(flag);
           this.banners.push({ mesh: flag, phase: sx });
 
-          const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.45, 0.65, 10), goldMat);
+          const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.45, 0.65, 12), goldMat);
           bowl.position.set(sx * 1.15, 0.95, -(radius - 1.5));
-          const flame = new THREE.Mesh(new THREE.ConeGeometry(0.46, 1.35, 8), new THREE.MeshBasicMaterial({ color: 0xfb923c }));
-          flame.position.set(sx * 1.15, 1.85, -(radius - 1.5));
-          this.envGroup.add(bowl, flame);
-          this.brazierFlames.push({ mesh: flame, phase: sx });
+          const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.52, 0.72, 10), woodMat);
+          stand.position.set(sx * 1.15, 0.36, -(radius - 1.5));
+          if (fireTex) {
+            const flame = new THREE.Sprite(new THREE.SpriteMaterial({
+              map: fireTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95,
+            }));
+            flame.position.set(sx * 1.15, 2.05, -(radius - 1.5));
+            flame.scale.set(1.9, 2.75, 1);
+            this.envGroup.add(stand, bowl, flame);
+            this.brazierFlames.push({ mesh: flame, phase: sx, isSprite: true });
+          } else {
+            const flame = new THREE.Mesh(new THREE.ConeGeometry(0.46, 1.35, 8), new THREE.MeshBasicMaterial({ color: 0xfb923c }));
+            flame.position.set(sx * 1.15, 1.85, -(radius - 1.5));
+            this.envGroup.add(stand, bowl, flame);
+            this.brazierFlames.push({ mesh: flame, phase: sx });
+          }
         }
 
         // 小龙女立于城头高台与杨过遥相呼应
@@ -746,9 +807,18 @@
       }
       const pGeo = new THREE.BufferGeometry();
       pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const dotTex = Studio.Assets3D && Studio.Assets3D.getSoftGlowDotTexture ? Studio.Assets3D.getSoftGlowDotTexture() : null;
       this.ambientPts = new THREE.Points(
         pGeo,
-        new THREE.PointsMaterial({ color: cfg.particleColor, size: themeId === 'valley' ? 0.24 : 0.16, transparent: true, opacity: 0.85 })
+        new THREE.PointsMaterial({
+          color: cfg.particleColor,
+          map: dotTex,
+          size: themeId === 'valley' ? 0.34 : 0.26,
+          transparent: true,
+          opacity: 0.85,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        })
       );
       this.envGroup.add(this.ambientPts);
     }
@@ -1111,7 +1181,13 @@
         l.pivot.rotation.x = Math.cos(this.t * 1.4 + l.phase) * 0.06;
       }
       for (const f of this.brazierFlames) {
-        f.mesh.scale.set(1, 0.85 + Math.sin(this.t * 12 + f.phase) * 0.22, 1);
+        const sy = 0.88 + Math.sin(this.t * 12 + f.phase) * 0.20;
+        if (f.isSprite) {
+          const sx = 0.94 + Math.cos(this.t * 9 + f.phase) * 0.10;
+          f.mesh.scale.set(1.9 * sx, 2.75 * sy, 1);
+        } else {
+          f.mesh.scale.set(1, sy, 1);
+        }
       }
       for (const b of this.banners) {
         b.mesh.rotation.y = Math.sin(this.t * 3.4 + b.phase) * 0.24;
