@@ -89,4 +89,27 @@
       'games/tomb-raider/main.js',
     ],
   });
+
+  Studio.registerManifest({
+    id: 'kart-rider',
+    title: '跑跑卡丁车 · 巅峰漂移',
+    shortTitle: '跑跑卡丁车',
+    genre: '3D 竞速漂移 / 道具乱斗',
+    tagline: '1:1 复刻经典跑跑手感 · Shift 漂移集气/撞墙断气/小喷/双喷/N2O 大喷 · 8 大道具战（导弹/水苍蝇/大魔王/飞碟/护盾）· 4 大赛道 4 大传奇赛车 8 人同场竞技！',
+    icon: '🏎️',
+    accent: '#ef4444',
+    coverBg: 'linear-gradient(135deg, #ef4444 0%, #0284c7 52%, #0f172a 100%)',
+    tags: ['漂移小喷/双喷', '8大道具乱斗', '4大赛道/4大车库', '8人实时雷达'],
+    orientationHint: '桌面 WASD+Shift / 手机横屏自动油门',
+    touchProfile: 'none',
+    hasSidebar: false,
+    scripts: [
+      'games/kart-rider/tracks.js',
+      'games/kart-rider/engine.js',
+      'games/kart-rider/kart3d.js',
+      'games/kart-rider/render3d.js',
+      'games/kart-rider/audio.js',
+      'games/kart-rider/main.js',
+    ],
+  });
 })(typeof window !== 'undefined' ? window : globalThis);
