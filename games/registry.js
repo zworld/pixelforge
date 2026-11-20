@@ -67,4 +67,26 @@
       'games/condor-hero/main.js',
     ],
   });
+
+  Studio.registerManifest({
+    id: 'tomb-raider',
+    title: '古墓丽影 · 秘鲁遗迹',
+    shortTitle: '古墓丽影',
+    genre: '第三人称 3D 动作冒险',
+    tagline: '1:1 致敬秘鲁洞窟/维尔卡班巴/失落山谷三部曲 · 18 关节甩辫劳拉 · 抓崖平移攀爬 · 推石压板/拉杆/滚石逃生 · 经典双枪后空翻大战霸王龙！',
+    icon: '🏛️',
+    accent: '#14b8a6',
+    coverBg: 'linear-gradient(135deg, #0d9488 0%, #78350f 52%, #1c1917 100%)',
+    tags: ['抓崖攀爬/平移', '推石滚石机关', '双枪空翻/霸王龙', '求生本能/照明弹'],
+    orientationHint: '桌面越肩 3D / 手机横屏掌机',
+    touchProfile: 'none',
+    hasSidebar: false,
+    scripts: [
+      'games/tomb-raider/levels.js',
+      'games/tomb-raider/engine.js',
+      'games/tomb-raider/lara3d.js',
+      'games/tomb-raider/render3d.js',
+      'games/tomb-raider/main.js',
+    ],
+  });
 })(typeof window !== 'undefined' ? window : globalThis);

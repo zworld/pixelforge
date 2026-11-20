@@ -59,6 +59,22 @@
       bass: [45, 45, 0, 45, 52, 0, 50, 48, 43, 43, 0, 43, 45, 0, 43, 45,
              45, 45, 0, 48, 50, 0, 48, 45, 43, 43, 45, 48, 45, 0, 43, 0],
     },
+    // 古墓丽影经典竖琴/弦乐遗迹探索氛围（D 小调神秘琶音）
+    tomb_explore: {
+      bpm: 84, wave: 'triangle', bassWave: 'sine',
+      lead: [62, 0, 65, 69, 72, 0, 69, 65, 64, 0, 67, 70, 69, 0, 65, 0,
+             62, 0, 69, 74, 72, 0, 69, 67, 65, 0, 64, 62, 61, 0, 62, 0],
+      bass: [38, 0, 0, 45, 38, 0, 0, 45, 34, 0, 0, 41, 33, 0, 0, 40,
+             38, 0, 0, 45, 36, 0, 0, 43, 34, 0, 0, 41, 33, 0, 38, 0],
+    },
+    // 失落山谷霸王龙 / 巨石逃生紧张交响鼓点
+    tomb_trex: {
+      bpm: 148, wave: 'sawtooth', bassWave: 'sawtooth',
+      lead: [62, 0, 65, 62, 69, 0, 68, 65, 62, 0, 65, 70, 69, 68, 65, 0,
+             62, 62, 74, 0, 73, 0, 70, 69, 68, 65, 62, 61, 62, 0, 0, 0],
+      bass: [38, 38, 0, 38, 41, 0, 40, 38, 38, 38, 0, 38, 43, 41, 40, 0,
+             38, 38, 0, 38, 45, 0, 43, 41, 40, 38, 36, 37, 38, 0, 36, 0],
+    },
   };
 
   class AudioEngine {
@@ -308,6 +324,56 @@
             this.noise(0.38, 0.20, 850, 90, 0.65);
             this.tone('sawtooth', 150, 38, 0.42, 0.16, 0, 680);
             [440, 523, 659, 880].forEach((f, i) => this.tone('triangle', f, f * 0.96, 0.32, 0.08, i * 0.04));
+            break;
+          // ---- 古墓丽影专属音效（双枪/抓崖/机关/滚石/霸王龙/经典秘密竖琴） ----
+          case 'pistol_shot':
+            this.noise(0.065, 0.14, 2400, 420, 1.1);
+            this.tone('sawtooth', 320, 72, 0.06, 0.09, 0, 1400);
+            break;
+          case 'magnum_shot':
+            this.noise(0.14, 0.20, 1800, 180, 0.85);
+            this.tone('sawtooth', 220, 44, 0.15, 0.14, 0, 1000);
+            this.tone('triangle', 140, 36, 0.18, 0.11);
+            break;
+          case 'ledge_grab':
+            this.noise(0.06, 0.11, 780, 260, 1.3);
+            this.tone('triangle', 190, 120, 0.06, 0.08);
+            break;
+          case 'lever_pull':
+            this.noise(0.14, 0.10, 600, 180, 1.4);
+            this.tone('square', 180, 130, 0.12, 0.08, 0, 700);
+            this.tone('triangle', 320, 480, 0.18, 0.09, 0.10);
+            break;
+          case 'gate_open':
+            this.noise(0.55, 0.16, 360, 90, 0.7);
+            this.tone('sawtooth', 96, 54, 0.55, 0.12, 0, 420);
+            break;
+          case 'block_slide':
+            this.noise(0.14, 0.11, 420, 140, 0.9);
+            this.tone('triangle', 110, 82, 0.13, 0.07);
+            break;
+          case 'boulder_rumble':
+            this.noise(0.42, 0.20, 320, 70, 0.65);
+            this.tone('sawtooth', 85, 38, 0.45, 0.14, 0, 350);
+            break;
+          case 'secret_chime':
+            // 致敬 1996 原版古墓丽影找到秘密时的经典升调竖琴和弦！
+            [587.3, 739.9, 880, 1174.7, 1479.9].forEach((f, i) => {
+              this.tone('triangle', f, f, 0.46, 0.09, i * 0.068);
+              this.tone('sine', f * 2, f * 2, 0.32, 0.035, i * 0.068 + 0.02);
+            });
+            break;
+          case 'medipack':
+            [523, 659, 784].forEach((f, i) => this.tone('sine', f, f * 1.01, 0.18, 0.09, i * 0.055));
+            break;
+          case 'flare':
+            this.noise(0.22, 0.12, 2600, 900, 1.5);
+            this.tone('triangle', 640, 1180, 0.14, 0.06);
+            break;
+          case 'trex_roar':
+            this.noise(0.65, 0.22, 520, 85, 0.6);
+            this.tone('sawtooth', 130, 42, 0.68, 0.16, 0, 520);
+            this.tone('square', 92, 34, 0.62, 0.11, 0.05, 380);
             break;
           case 'die':
             this.noise(0.22, 0.14, 700, 120, 0.8);
