@@ -62,6 +62,7 @@
     scripts: [
       'games/condor-hero/story.js',
       'games/condor-hero/engine.js',
+      'games/condor-hero/character3d.js',
       'games/condor-hero/render3d.js',
       'games/condor-hero/main.js',
     ],

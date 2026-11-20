@@ -616,8 +616,11 @@
           ctx.audio.ensure();
           if (e.button === 0) {
             this.pending.attack = true;
-            if (!this.pointerLocked && !this.touchEnabled && canvas.requestPointerLock) {
-              try { canvas.requestPointerLock(); } catch (err) { /* ignore */ }
+            if (document.hasFocus() && !this.pointerLocked && !this.touchEnabled && canvas.requestPointerLock) {
+              try {
+                const res = canvas.requestPointerLock();
+                if (res && typeof res.catch === 'function') res.catch(() => {});
+              } catch (err) { /* ignore */ }
             }
             this.mouseDragging = true;
             this.mouseLast.x = e.clientX;

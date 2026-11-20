@@ -1,4 +1,4 @@
-/* 神雕侠侣 · 问情剑 — 第一人称 3D 国风武侠渲染器（共享 Studio.Gfx3D 单上下文，支持完整 dispose） */
+/* 神雕侠侣 · 问情剑 — 《仙剑奇侠传》国风 3D 渲染器（青绿山水天穹、汉白玉石台、花木宫灯、16 关节灵动人物与第一人称神兵） */
 (function (G) {
   'use strict';
   const Studio = G.Studio;
@@ -6,159 +6,409 @@
 
   const THEMES = {
     tomb: {
-      skyTop: '#060c1f',
-      skyMid: '#0f233c',
-      skyBot: '#1d445c',
-      fog: 0x0e2236,
-      fogDensity: 0.020,
-      ambient: 0x6ea8c9,
-      hemiSky: 0x7dd3fc,
-      hemiGround: 0x162231,
-      sunColor: 0xbbe6ff,
-      sunPos: [14, 24, -18],
-      floorBase: '#182636',
-      floorLine: '#38bdf8',
-      accent: 0x38bdf8,
-      particleColor: 0xfde68a,
-      moonColor: '#e0f2fe',
+      // 终南古墓 · 仙剑青绿夜月玉雾
+      skyTop: '#0b2240',
+      skyMid: '#184e68',
+      skyBot: '#57b8b8',
+      mountainFar: '#123850',
+      mountainNear: '#0d263b',
+      cloudColor: 'rgba(186, 242, 245, 0.32)',
+      fog: 0x1b475c,
+      fogDensity: 0.011,
+      hemiSky: 0xbaf2ff,
+      hemiGround: 0x264156,
+      sunColor: 0xe6f9ff,
+      sunPos: [16, 26, -18],
+      floorBase: '#30475c',
+      floorTile: '#3b5870',
+      floorLine: '#7dd3fc',
+      accent: 0x67e8f9,
+      lantern: 0xfde68a,
+      particleColor: 0xfef08a,
+      moonColor: '#f0fdff',
+      shaftColor: 0x7dd3fc,
     },
     valley: {
-      skyTop: '#24091b',
-      skyMid: '#6b1838',
-      skyBot: '#d96b43',
-      fog: 0x3a1326,
-      fogDensity: 0.018,
-      ambient: 0xf3a683,
-      hemiSky: 0xfda4af,
-      hemiGround: 0x2d101b,
-      sunColor: 0xffb38a,
-      sunPos: [-16, 18, -22],
-      floorBase: '#2a1b24',
-      floorLine: '#fb7185',
+      // 绝情花谷 · 仙剑桃红丹霞暮景
+      skyTop: '#3b1548',
+      skyMid: '#9d3666',
+      skyBot: '#f8a57a',
+      mountainFar: '#6d234d',
+      mountainNear: '#471535',
+      cloudColor: 'rgba(255, 208, 194, 0.36)',
+      fog: 0x6e284b,
+      fogDensity: 0.010,
+      hemiSky: 0xffd1dc,
+      hemiGround: 0x4b2434,
+      sunColor: 0xffd6b3,
+      sunPos: [-18, 22, -20],
+      floorBase: '#4d3544',
+      floorTile: '#5d4050',
+      floorLine: '#fda4af',
       accent: 0xfb7185,
-      particleColor: 0xf43f5e,
-      moonColor: '#fecdd3',
+      lantern: 0xfdba74,
+      particleColor: 0xff9eb5,
+      moonColor: '#ffe4e6',
+      shaftColor: 0xfda4af,
     },
     mound: {
-      skyTop: '#090d16',
-      skyMid: '#1e293b',
-      skyBot: '#475569',
-      fog: 0x192332,
-      fogDensity: 0.022,
-      ambient: 0x94a3b8,
-      hemiSky: 0xcbd5e1,
-      hemiGround: 0x1e293b,
-      sunColor: 0xfde68a,
-      sunPos: [10, 26, -15],
-      floorBase: '#1f2630',
-      floorLine: '#94a3b8',
-      accent: 0xf59e0b,
-      particleColor: 0xe2e8f0,
-      moonColor: '#f8fafc',
+      // 独孤剑冢 · 水墨云海苍松剑峰
+      skyTop: '#162844',
+      skyMid: '#375978',
+      skyBot: '#b6d0e0',
+      mountainFar: '#27425c',
+      mountainNear: '#1a2c40',
+      cloudColor: 'rgba(235, 245, 255, 0.42)',
+      fog: 0x3b5870,
+      fogDensity: 0.010,
+      hemiSky: 0xe2f0ff,
+      hemiGround: 0x334155,
+      sunColor: 0xfff3d1,
+      sunPos: [14, 28, -16],
+      floorBase: '#3c4856',
+      floorTile: '#4a5868',
+      floorLine: '#e2e8f0',
+      accent: 0xfbbf24,
+      lantern: 0xfde68a,
+      particleColor: 0xf8fafc,
+      moonColor: '#fffbeb',
+      shaftColor: 0xfef3c7,
     },
     xiangyang: {
-      skyTop: '#160606',
-      skyMid: '#4c1111',
-      skyBot: '#b45309',
-      fog: 0x2c0d0b,
-      fogDensity: 0.017,
-      ambient: 0xfbbf24,
-      hemiSky: 0xf97316,
-      hemiGround: 0x26100a,
-      sunColor: 0xffd27d,
-      sunPos: [18, 20, -24],
-      floorBase: '#271c19',
-      floorLine: '#f59e0b',
+      // 襄阳决战 · 残阳金霞烽火城头
+      skyTop: '#2a0d1c',
+      skyMid: '#8a2323',
+      skyBot: '#f59e0b',
+      mountainFar: '#59181c',
+      mountainNear: '#3b1113',
+      cloudColor: 'rgba(254, 215, 140, 0.34)',
+      fog: 0x5c1f1a,
+      fogDensity: 0.0095,
+      hemiSky: 0xffcf87,
+      hemiGround: 0x452218,
+      sunColor: 0xffe4a3,
+      sunPos: [20, 22, -22],
+      floorBase: '#4c3a32',
+      floorTile: '#5c463b',
+      floorLine: '#fbbf24',
       accent: 0xfacc15,
-      particleColor: 0xfb923c,
-      moonColor: '#fde68a',
+      lantern: 0xfb923c,
+      particleColor: 0xfdba74,
+      moonColor: '#fef08a',
+      shaftColor: 0xfbbf24,
     },
   };
 
+  /** 手绘国风青绿/丹霞/水墨山水云海天穹（1024×512） */
   function makeSkyTexture(cfg) {
     const c = document.createElement('canvas');
-    c.width = 512;
-    c.height = 256;
+    c.width = 1024;
+    c.height = 512;
     const ctx = c.getContext('2d');
-    const g = ctx.createLinearGradient(0, 0, 0, 256);
+
+    const g = ctx.createLinearGradient(0, 0, 0, 512);
     g.addColorStop(0, cfg.skyTop);
-    g.addColorStop(0.55, cfg.skyMid);
-    g.addColorStop(1, cfg.skyBot);
+    g.addColorStop(0.45, cfg.skyMid);
+    g.addColorStop(0.76, cfg.skyBot);
+    g.addColorStop(1, cfg.mountainNear);
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 512, 256);
+    ctx.fillRect(0, 0, 1024, 512);
 
-    // 国风水墨远山剪影
-    ctx.fillStyle = 'rgba(6, 10, 20, 0.36)';
-    ctx.beginPath();
-    ctx.moveTo(0, 256);
-    for (let x = 0; x <= 512; x += 16) {
-      const h = 158 + Math.sin(x * 0.025) * 24 + Math.cos(x * 0.07) * 14;
-      ctx.lineTo(x, h);
+    // 璀璨星点（天顶微芒）
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    for (let i = 0; i < 90; i++) {
+      const sx = (i * 137) % 1024;
+      const sy = (i * 53) % 190;
+      const sr = (i % 3 === 0) ? 1.8 : 1.0;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+      ctx.fill();
     }
-    ctx.lineTo(512, 256);
-    ctx.closePath();
-    ctx.fill();
 
-    // 明月 / 落日
-    const gx = 256, gy = 90;
-    const mg = ctx.createRadialGradient(gx, gy, 4, gx, gy, 54);
-    mg.addColorStop(0, cfg.moonColor);
-    mg.addColorStop(0.35, cfg.moonColor + '88');
+    // 仙剑明月 / 残阳辉光
+    const gx = 512, gy = 164;
+    const mg = ctx.createRadialGradient(gx, gy, 16, gx, gy, 130);
+    mg.addColorStop(0, '#ffffff');
+    mg.addColorStop(0.22, cfg.moonColor);
+    mg.addColorStop(0.55, cfg.moonColor + '66');
     mg.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = mg;
     ctx.beginPath();
-    ctx.arc(gx, gy, 54, 0, Math.PI * 2);
+    ctx.arc(gx, gy, 130, 0, Math.PI * 2);
     ctx.fill();
+
+    // 流云霞带
+    ctx.fillStyle = cfg.cloudColor;
+    for (let i = 0; i < 14; i++) {
+      const cx = (i * 88) % 1024;
+      const cy = 210 + Math.sin(i * 1.4) * 48;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 95 + (i % 3) * 35, 16 + (i % 2) * 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 远景水墨群峰（两层景深叠加）
+    const drawMountainLayer = (baseY, amp1, amp2, freq1, freq2, color) => {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, 512);
+      for (let x = 0; x <= 1024; x += 12) {
+        const y = baseY - Math.abs(Math.sin(x * freq1)) * amp1 - Math.cos(x * freq2) * amp2;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(1024, 512);
+      ctx.closePath();
+      ctx.fill();
+    };
+    drawMountainLayer(340, 74, 24, 0.008, 0.022, cfg.mountainFar);
+    // 山腰云雾轻笼
+    const mistG = ctx.createLinearGradient(0, 290, 0, 380);
+    mistG.addColorStop(0, 'rgba(255,255,255,0)');
+    mistG.addColorStop(0.5, cfg.cloudColor);
+    mistG.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = mistG;
+    ctx.fillRect(0, 290, 1024, 90);
+    drawMountainLayer(395, 58, 20, 0.011, 0.031, cfg.mountainNear);
 
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
   }
 
+  /** 雕花汉白玉/青石莲花太极演武台地面（1024×1024） */
   function makeFloorTexture(cfg) {
     const c = document.createElement('canvas');
-    c.width = 512;
-    c.height = 512;
+    c.width = 1024;
+    c.height = 1024;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = cfg.floorBase;
-    ctx.fillRect(0, 0, 512, 512);
 
-    // 青石板径向阵纹
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    const bg = ctx.createRadialGradient(512, 512, 40, 512, 512, 512);
+    bg.addColorStop(0, cfg.floorTile);
+    bg.addColorStop(0.75, cfg.floorBase);
+    bg.addColorStop(1, '#1e293b');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    // 细腻青石拼缝与径向石砖
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
     ctx.lineWidth = 2;
-    for (let r = 42; r <= 245; r += 40) {
+    for (let r = 80; r <= 490; r += 68) {
       ctx.beginPath();
-      ctx.arc(256, 256, r, 0, Math.PI * 2);
+      ctx.arc(512, 512, r, 0, Math.PI * 2);
       ctx.stroke();
     }
-    for (let i = 0; i < 16; i++) {
-      const a = (i / 16) * Math.PI * 2;
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
       ctx.beginPath();
-      ctx.moveTo(256 + Math.cos(a) * 42, 256 + Math.sin(a) * 42);
-      ctx.lineTo(256 + Math.cos(a) * 250, 256 + Math.sin(a) * 250);
+      ctx.moveTo(512 + Math.cos(a) * 80, 512 + Math.sin(a) * 80);
+      ctx.lineTo(512 + Math.cos(a) * 498, 512 + Math.sin(a) * 498);
       ctx.stroke();
     }
-    // 中央八卦意象双环
-    ctx.strokeStyle = cfg.floorLine + '55';
-    ctx.lineWidth = 4;
+
+    // 中央仙剑风格莲花瓣 + 太极流光青铜嵌纹
+    ctx.strokeStyle = cfg.floorLine + '88';
+    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.arc(256, 256, 98, 0, Math.PI * 2);
+    ctx.arc(512, 512, 165, 0, Math.PI * 2);
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(256, 256, 232, 0, Math.PI * 2);
+    ctx.arc(512, 512, 185, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 细微石材噪点
-    for (let i = 0; i < 900; i++) {
-      const x = (i * 73) % 512;
-      const y = (i * 197) % 512;
-      ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.08)';
-      ctx.fillRect(x, y, 4, 4);
+    // 八瓣莲花雕纹
+    ctx.strokeStyle = cfg.floorLine + '70';
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      ctx.save();
+      ctx.translate(512, 512);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(0, -185);
+      ctx.quadraticCurveTo(54, -240, 0, -295);
+      ctx.quadraticCurveTo(-54, -240, 0, -185);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 外圈双轨金玉纹
+    ctx.strokeStyle = cfg.floorLine + 'aa';
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.arc(512, 512, 466, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 柔化石材纹理颗粒
+    for (let i = 0; i < 1600; i++) {
+      const x = (i * 173) % 1024;
+      const y = (i * 317) % 1024;
+      ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.05)';
+      ctx.fillRect(x, y, 5, 5);
     }
 
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
+  }
+
+  /** 第一人称神兵雕花剑身纹理（百炼花纹钢 + 剑脊古篆流光） */
+  function makeBladeTexture(isHeavy) {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 512;
+    const ctx = c.getContext('2d');
+
+    const g = ctx.createLinearGradient(0, 0, 128, 0);
+    if (isHeavy) {
+      g.addColorStop(0, '#475569');
+      g.addColorStop(0.25, '#272c36');
+      g.addColorStop(0.5, '#1e242d');
+      g.addColorStop(0.75, '#272c36');
+      g.addColorStop(1, '#475569');
+    } else {
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.2, '#cbd5e1');
+      g.addColorStop(0.5, '#f8fafc');
+      g.addColorStop(0.8, '#cbd5e1');
+      g.addColorStop(1, '#ffffff');
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 512);
+
+    // 锻打水波纹
+    ctx.strokeStyle = isHeavy ? 'rgba(251,191,36,0.16)' : 'rgba(56,189,248,0.22)';
+    ctx.lineWidth = 2;
+    for (let y = 16; y < 500; y += 22) {
+      ctx.beginPath();
+      ctx.moveTo(8, y);
+      ctx.quadraticCurveTo(64, y + (y % 44 === 0 ? 12 : -12), 120, y);
+      ctx.stroke();
+    }
+
+    // 剑脊铭文线
+    ctx.fillStyle = isHeavy ? '#f59e0b' : '#38bdf8';
+    ctx.fillRect(58, 36, 12, 430);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  /** 搭建一株仙剑风国风花树/苍松（曲折树干 + 繁茂分层花叶冠） */
+  function createTree(kind) {
+    const g = new THREE.Group();
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3121, roughness: 0.88 });
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.34, 3.2, 8), trunkMat);
+    trunk.position.y = 1.5;
+    trunk.rotation.z = 0.08;
+    g.add(trunk);
+
+    const branch1 = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.16, 1.8, 6), trunkMat);
+    branch1.position.set(0.55, 2.7, 0.2);
+    branch1.rotation.z = -0.62;
+    g.add(branch1);
+
+    const branch2 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 1.6, 6), trunkMat);
+    branch2.position.set(-0.52, 2.5, -0.2);
+    branch2.rotation.z = 0.58;
+    g.add(branch2);
+
+    const foliageColors = kind === 'blossom'
+      ? [0xf43f5e, 0xfb7185, 0xfda4af, 0xffe4e6]
+      : [0x14532d, 0x166534, 0x15803d, 0x22c55e];
+
+    const puffs = [
+      [0, 3.6, 0, 1.35],
+      [1.05, 3.25, 0.35, 1.05],
+      [-1.0, 3.1, -0.25, 0.98],
+      [0.35, 3.9, -0.65, 0.92],
+      [-0.45, 3.8, 0.6, 0.88],
+    ];
+    puffs.forEach(([x, y, z, r], idx) => {
+      const col = foliageColors[idx % foliageColors.length];
+      const mat = new THREE.MeshStandardMaterial({
+        color: col,
+        emissive: kind === 'blossom' ? 0x9f1239 : 0x052e16,
+        emissiveIntensity: kind === 'blossom' ? 0.25 : 0.15,
+        roughness: 0.65,
+      });
+      const puff = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), mat);
+      puff.scale.set(1.2, 0.72, 1.15);
+      puff.position.set(x, y, z);
+      g.add(puff);
+    });
+    return g;
+  }
+
+  /** 建造精雕多翼羽 3D 神雕（独孤剑冢崖巅振翅） */
+  function createMajesticCondor() {
+    const condor = new THREE.Group();
+    const featherDark = new THREE.MeshStandardMaterial({ color: 0x3b3532, roughness: 0.58, metalness: 0.16, emissive: 0x1c1917, emissiveIntensity: 0.35 });
+    const featherGold = new THREE.MeshStandardMaterial({ color: 0x78593c, roughness: 0.52, metalness: 0.22 });
+    const beakMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.26, metalness: 0.55, emissive: 0xb45309, emissiveIntensity: 0.3 });
+
+    // 雄健胸腹与脖颈
+    const torso = new THREE.Mesh(new THREE.SphereGeometry(1.25, 16, 12), featherDark);
+    torso.scale.set(0.88, 1.35, 1.02);
+    condor.add(torso);
+    const chest = new THREE.Mesh(new THREE.SphereGeometry(0.95, 12, 10), featherGold);
+    chest.position.set(0, 0.2, 0.42);
+    chest.scale.set(0.85, 1.05, 0.72);
+    condor.add(chest);
+
+    const headPivot = new THREE.Group();
+    headPivot.position.set(0, 1.62, 0.36);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 14, 10), featherDark);
+    headPivot.add(head);
+    // 雕冠羽
+    for (let i = 0; i < 3; i++) {
+      const plume = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.58, 6), featherGold);
+      plume.position.set((i - 1) * 0.14, 0.58, -0.18 - i * 0.04);
+      plume.rotation.x = -0.45;
+      headPivot.add(plume);
+    }
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.76, 8), beakMat);
+    beak.rotation.x = Math.PI * 0.62;
+    beak.position.set(0, -0.05, 0.68);
+    headPivot.add(beak);
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), eyeMat);
+      eye.position.set(s * 0.32, 0.14, 0.46);
+      headPivot.add(eye);
+    }
+    condor.add(headPivot);
+
+    // 尾羽扇
+    for (let i = -2; i <= 2; i++) {
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.55, 0.12), i % 2 === 0 ? featherDark : featherGold);
+      tail.position.set(i * 0.26, -1.25, -0.78);
+      tail.rotation.set(0.55, 0, i * 0.14);
+      condor.add(tail);
+    }
+
+    // 双展多段飞羽巨翼（内外两段关节，振翅更自然生动！）
+    const wings = [];
+    for (const side of [-1, 1]) {
+      const innerPivot = new THREE.Group();
+      innerPivot.position.set(side * 0.85, 0.55, -0.1);
+      const innerWing = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.26, 1.35), featherDark);
+      innerWing.position.set(side * 1.15, 0.12, 0);
+      innerPivot.add(innerWing);
+
+      const outerPivot = new THREE.Group();
+      outerPivot.position.set(side * 2.3, 0.16, 0);
+      for (let f = 0; f < 5; f++) {
+        const feather = new THREE.Mesh(new THREE.BoxGeometry(1.95 - f * 0.16, 0.12, 0.34), f % 2 === 0 ? featherDark : featherGold);
+        feather.position.set(side * (0.95 - f * 0.08), 0, -0.45 + f * 0.24);
+        feather.rotation.y = -side * (0.12 * f);
+        outerPivot.add(feather);
+      }
+      innerPivot.add(outerPivot);
+      condor.add(innerPivot);
+      wings.push({ innerPivot, outerPivot, side });
+    }
+    return { group: condor, wings, headPivot };
   }
 
   class CondorHeroRenderer {
@@ -166,7 +416,7 @@
       this.gfx = gfx;
       this.gl = gfx.gl;
       this.scene = new THREE.Scene();
-      this.camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.08, 180);
+      this.camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.08, 220);
       this.camera.rotation.order = 'YXZ';
       this.scene.add(this.camera);
 
@@ -189,8 +439,11 @@
       this.projMeshes = new Map();
       this.slashMeshes = [];
       this.sparkList = [];
+      this.lanterns = [];
       this.brazierFlames = [];
-      this.condorWings = [];
+      this.banners = [];
+      this.npcList = [];
+      this.condorRig = null;
       this.ambientPts = null;
 
       this.themeId = null;
@@ -206,10 +459,9 @@
       this.shakeMag = 0;
       this.t = 0;
 
-      // 共享轻量几何体（避免频繁创建）
       this.sparkGeo = new THREE.OctahedronGeometry(0.08, 0);
-      this.slashGeo = new THREE.RingGeometry(0.95, 1.85, 22, 1, -Math.PI * 0.42, Math.PI * 0.84);
-      this.palmRingGeo = new THREE.RingGeometry(0.55, 1.15, 32);
+      this.slashGeo = new THREE.RingGeometry(0.95, 1.92, 24, 1, -Math.PI * 0.44, Math.PI * 0.88);
+      this.palmRingGeo = new THREE.RingGeometry(0.55, 1.22, 36);
     }
 
     ensureScene(state) {
@@ -225,213 +477,276 @@
       this.themeId = themeId;
       Studio.disposeObject(this.envGroup);
       this.envGroup.clear();
+      this.lanterns = [];
       this.brazierFlames = [];
-      this.condorWings = [];
+      this.banners = [];
+      this.npcList = [];
+      this.condorRig = null;
 
       const cfg = THEMES[themeId] || THEMES.tomb;
       this.scene.fog = new THREE.FogExp2(cfg.fog, cfg.fogDensity);
       this.scene.background = new THREE.Color(cfg.fog);
 
-      // 天穹球
+      // 1. 仙剑手绘天穹
       const skyTex = makeSkyTexture(cfg);
       const sky = new THREE.Mesh(
-        new THREE.SphereGeometry(95, 28, 18),
+        new THREE.SphereGeometry(120, 32, 20),
         new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })
       );
       this.envGroup.add(sky);
 
-      // 光照（主光 + 半球环境光 + 逆光轮廓光，让国风人物与石柱立体感饱满）
-      const hemi = new THREE.HemisphereLight(cfg.hemiSky, cfg.hemiGround, 1.38);
+      // 2. 通透明亮三点国风光照（高饱和玉色/霞光氛围，拒绝死黑）
+      const hemi = new THREE.HemisphereLight(cfg.hemiSky, cfg.hemiGround, 1.65);
       this.envGroup.add(hemi);
-      const dir = new THREE.DirectionalLight(cfg.sunColor, 1.55);
+      const dir = new THREE.DirectionalLight(cfg.sunColor, 1.75);
       dir.position.set(...cfg.sunPos);
       this.envGroup.add(dir);
-      const rim = new THREE.DirectionalLight(cfg.accent, 0.72);
-      rim.position.set(-cfg.sunPos[0], 12, 20);
+      const rim = new THREE.DirectionalLight(cfg.accent, 0.95);
+      rim.position.set(-cfg.sunPos[0], 14, 22);
       this.envGroup.add(rim);
 
-      // 比武石台地面
+      // 3. 雕花汉白玉 / 青石莲花演武台
       const floorTex = makeFloorTexture(cfg);
       const floor = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius + 0.6, radius + 1.4, 1.2, 40),
-        new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.78, metalness: 0.14 })
+        new THREE.CylinderGeometry(radius + 0.8, radius + 1.8, 1.4, 48),
+        new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.64, metalness: 0.16 })
       );
-      floor.position.y = -0.6;
+      floor.position.y = -0.7;
       this.envGroup.add(floor);
 
-      // 场地外沿石栏与青铜火盆
-      const pillarCount = 12;
-      const pillarMat = new THREE.MeshStandardMaterial({
-        color: themeId === 'valley' ? 0x7f1d1d : (themeId === 'xiangyang' ? 0x44403c : 0x334155),
-        roughness: 0.72,
-        metalness: 0.18,
+      // 汉白玉石栏与流光宫灯环绕
+      const marbleMat = new THREE.MeshStandardMaterial({
+        color: themeId === 'valley' ? 0xf5d0c5 : (themeId === 'xiangyang' ? 0x9c8b7e : 0xdbeafe),
+        roughness: 0.55,
+        metalness: 0.12,
       });
-      const capMat = new THREE.MeshStandardMaterial({ color: cfg.accent, roughness: 0.35, metalness: 0.55, emissive: cfg.accent, emissiveIntensity: 0.22 });
+      const woodMat = new THREE.MeshStandardMaterial({
+        color: themeId === 'valley' ? 0x991b1b : (themeId === 'xiangyang' ? 0x7c2d12 : 0x334155),
+        roughness: 0.58,
+      });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.72, roughness: 0.3, emissive: 0x92400e, emissiveIntensity: 0.25 });
+      const lanternMat = new THREE.MeshBasicMaterial({ color: cfg.lantern });
 
-      for (let i = 0; i < pillarCount; i++) {
-        const a = (i / pillarCount) * Math.PI * 2;
-        const px = Math.sin(a) * (radius + 0.15);
-        const pz = -Math.cos(a) * (radius + 0.15);
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2;
+        const px = Math.sin(a) * (radius + 0.35);
+        const pz = -Math.cos(a) * (radius + 0.35);
 
-        // 避开正北核心地标视野
-        if (i === 0) continue;
+        // 汉白玉望柱（正北留出主景通道）
+        if (i !== 0) {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 1.5, 8), marbleMat);
+          post.position.set(px, 0.75, pz);
+          const finial = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), goldMat);
+          finial.position.set(px, 1.62, pz);
+          this.envGroup.add(post, finial);
 
-        const pillarH = themeId === 'tomb' ? 6.2 : (themeId === 'valley' ? 4.8 : (themeId === 'xiangyang' ? 3.2 : 3.8));
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, pillarH, 8), pillarMat);
-        pillar.position.set(px, pillarH * 0.5, pz);
-        this.envGroup.add(pillar);
+          // 隔柱设立雕花宫灯架 + 随风轻晃暖光灯笼
+          if (i % 2 === 1) {
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.15, 4.6, 8), woodMat);
+            pole.position.set(px * 1.03, 2.3, pz * 1.03);
+            this.envGroup.add(pole);
 
-        if (i % 2 === 1) {
-          // 隔柱立青铜火盆
-          const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.32, 0.45, 8), new THREE.MeshStandardMaterial({ color: 0x451a03, metalness: 0.6, roughness: 0.4 }));
-          bowl.position.set(px * 0.91, 1.15, pz * 0.91);
-          this.envGroup.add(bowl);
+            const arm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 1.15), woodMat);
+            arm.position.set(px * 0.99, 4.45, pz * 0.99);
+            arm.rotation.y = -a;
+            this.envGroup.add(arm);
 
-          const flame = new THREE.Mesh(
-            new THREE.ConeGeometry(0.32, 0.85, 6),
-            new THREE.MeshBasicMaterial({ color: themeId === 'tomb' ? 0x7dd3fc : 0xfb923c })
-          );
-          flame.position.set(px * 0.91, 1.72, pz * 0.91);
-          this.envGroup.add(flame);
-          this.brazierFlames.push({ mesh: flame, phase: i * 1.1 });
-        } else {
-          const cap = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.25, 0.95), capMat);
-          cap.position.set(px, pillarH + 0.12, pz);
-          this.envGroup.add(cap);
+            const lPivot = new THREE.Group();
+            lPivot.position.set(px * 0.95, 4.4, pz * 0.95);
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), lanternMat);
+            body.scale.set(0.85, 1.25, 0.85);
+            body.position.y = -0.45;
+            const capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.10, 8), goldMat);
+            capTop.position.y = -0.10;
+            const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.38, 6), new THREE.MeshBasicMaterial({ color: 0xf43f5e }));
+            tassel.position.y = -0.98;
+            tassel.rotation.z = Math.PI;
+            lPivot.add(body, capTop, tassel);
+            this.envGroup.add(lPivot);
+            this.lanterns.push({ pivot: lPivot, phase: i * 1.3 });
+          }
         }
       }
 
-      // ---- 四大原著章节标志性 3D 景观 ----
+      // 体积感丁达尔神光柱（仙剑仙气核心层次！）
+      const shaftMat = new THREE.MeshBasicMaterial({
+        color: cfg.shaftColor,
+        transparent: true,
+        opacity: 0.085,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      for (const sx of [-6, 0, 6]) {
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 3.2, 22, 12, 1, true), shaftMat);
+        shaft.position.set(sx, 10, -radius * 0.45);
+        shaft.rotation.z = -0.22;
+        shaft.rotation.x = 0.14;
+        this.envGroup.add(shaft);
+      }
+
+      // ---- 四大章节仙剑风地标景观 + 活灵活现的 NPC ----
       if (themeId === 'tomb') {
-        // 活死人墓：正北寒玉床与玄冰灵气
-        const bed = new THREE.Mesh(
-          new THREE.BoxGeometry(4.4, 0.9, 2.2),
-          new THREE.MeshStandardMaterial({ color: 0xbae6fd, emissive: 0x0284c7, emissiveIntensity: 0.45, roughness: 0.18, metalness: 0.25 })
-        );
-        bed.position.set(0, 0.45, -(radius - 2.0));
-        this.envGroup.add(bed);
+        // 活死人墓：汉白玉月洞门 + 发光晶莹寒玉床 + 白衣小龙女！
         const arch = new THREE.Mesh(
-          new THREE.TorusGeometry(4.5, 0.35, 8, 24, Math.PI),
-          new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.8 })
+          new THREE.TorusGeometry(4.8, 0.42, 12, 32, Math.PI),
+          marbleMat
         );
-        arch.position.set(0, 0.1, -(radius + 0.4));
+        arch.position.set(0, 0.2, -(radius + 0.5));
         this.envGroup.add(arch);
-      } else if (themeId === 'valley') {
-        // 绝情花谷：丹房亭檐与环绕红艳情花丛
-        const roof = new THREE.Mesh(
-          new THREE.ConeGeometry(5.6, 2.2, 6),
-          new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.55 })
+
+        const bed = new THREE.Mesh(
+          new THREE.BoxGeometry(4.6, 0.95, 2.3),
+          new THREE.MeshStandardMaterial({ color: 0xe0f2fe, emissive: 0x0ea5e9, emissiveIntensity: 0.55, roughness: 0.15, metalness: 0.25 })
         );
-        roof.position.set(0, 6.4, -(radius + 1.2));
-        this.envGroup.add(roof);
-        const flowerMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, emissive: 0x9f1239, emissiveIntensity: 0.35, roughness: 0.4 });
-        const leafMat = new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.75 });
-        for (let i = 0; i < 16; i++) {
-          const a = (i / 16) * Math.PI * 2;
-          const fx = Math.sin(a) * (radius - 0.55);
-          const fz = -Math.cos(a) * (radius - 0.55);
-          const bush = new THREE.Mesh(new THREE.DodecahedronGeometry(0.68, 0), leafMat);
-          bush.position.set(fx, 0.42, fz);
-          this.envGroup.add(bush);
-          const bloom = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 0), flowerMat);
-          bloom.position.set(fx, 0.98, fz);
-          this.envGroup.add(bloom);
+        bed.position.set(0, 0.48, -(radius - 2.2));
+        this.envGroup.add(bed);
+
+        const frostHalo = new THREE.Mesh(
+          new THREE.RingGeometry(2.5, 3.4, 32),
+          new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.38, side: THREE.DoubleSide })
+        );
+        frostHalo.rotation.x = -Math.PI / 2;
+        frostHalo.position.set(0, 0.06, -(radius - 2.2));
+        this.envGroup.add(frostHalo);
+
+        // 小龙女立于寒玉台侧，白衣飘飘、披帛飞舞，为杨过助阵！
+        const xlnData = { npcId: 'xiaolongnu', isNpc: true, id: 9001, vx: 0, vz: 0 };
+        const xlnMesh = CH.createArticulatedCharacter(xlnData);
+        xlnMesh.position.set(-3.4, 0, -(radius - 2.4));
+        xlnMesh.rotation.y = 0.35;
+        this.envGroup.add(xlnMesh);
+        this.npcList.push({ mesh: xlnMesh, data: xlnData });
+      } else if (themeId === 'valley') {
+        // 绝情花谷：双层飞檐朱红亭阁 + 八株盛开粉红情花古树！
+        const pavilion = new THREE.Group();
+        pavilion.position.set(0, 0, -(radius + 2.4));
+        for (const [cx, cz] of [[-2.8, -2.0], [2.8, -2.0], [-2.8, 2.0], [2.8, 2.0]]) {
+          const col = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 5.2, 10), woodMat);
+          col.position.set(cx, 2.6, cz);
+          pavilion.add(col);
+        }
+        const roof1 = new THREE.Mesh(new THREE.ConeGeometry(5.6, 2.0, 6), new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.45 }));
+        roof1.position.y = 6.0;
+        const roof2 = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.8, 6), new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.45 }));
+        roof2.position.y = 7.7;
+        const spire = new THREE.Mesh(new THREE.OctahedronGeometry(0.45, 0), goldMat);
+        spire.position.y = 8.9;
+        pavilion.add(roof1, roof2, spire);
+        this.envGroup.add(pavilion);
+
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 + 0.38;
+          const tree = createTree('blossom');
+          tree.position.set(Math.sin(a) * (radius + 2.6), 0, -Math.cos(a) * (radius + 2.6));
+          tree.rotation.y = i * 1.2;
+          tree.scale.setScalar(1.05 + (i % 3) * 0.16);
+          this.envGroup.add(tree);
         }
       } else if (themeId === 'mound') {
-        // 独孤剑冢：四座剑碑 + 崖巅巨型 3D 神雕！
-        const rockMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.92 });
-        const cliff = new THREE.Mesh(new THREE.ConeGeometry(6.2, 7.5, 7), rockMat);
-        cliff.position.set(0, 3.2, -(radius + 3.2));
+        // 独孤剑冢：云海山巅 + 苍松 + 四剑碑（碑前插有 3D 古剑）+ 精雕振翅神雕！
+        const rockMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.86 });
+        const cliff = new THREE.Mesh(new THREE.ConeGeometry(6.5, 7.6, 9), rockMat);
+        cliff.position.set(0, 3.2, -(radius + 3.4));
         this.envGroup.add(cliff);
 
-        // 剑冢四剑碑
-        for (let i = -1.5; i <= 1.5; i += 1) {
-          const slab = new THREE.Mesh(
-            new THREE.BoxGeometry(0.75, 2.6 + Math.abs(i) * 0.3, 0.25),
-            new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.85 })
-          );
-          slab.position.set(i * 3.1, 1.3, -(radius - 1.2));
-          slab.rotation.y = -i * 0.22;
+        // 缭绕云海云团
+        const cloudMat = new THREE.MeshBasicMaterial({ color: 0xe2f0ff, transparent: true, opacity: 0.36 });
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2;
+          const cl = new THREE.Mesh(new THREE.SphereGeometry(3.8 + (i % 3), 10, 8), cloudMat);
+          cl.scale.set(1.6, 0.45, 1.3);
+          cl.position.set(Math.sin(a) * (radius + 5.5), -1.8 + Math.sin(i) * 0.8, -Math.cos(a) * (radius + 5.5));
+          this.envGroup.add(cl);
+        }
+
+        // 四座剑碑 + 插地古剑
+        for (let idx = 0; idx < 4; idx++) {
+          const i = idx - 1.5;
+          const sx = i * 3.4;
+          const sz = -(radius - 1.2);
+          const slab = new THREE.Mesh(new THREE.BoxGeometry(0.82, 2.7 + Math.abs(i) * 0.35, 0.28), marbleMat);
+          slab.position.set(sx, 1.35, sz);
+          slab.rotation.y = -i * 0.2;
           this.envGroup.add(slab);
+
+          const swBlade = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.45, 0.03), new THREE.MeshStandardMaterial({ color: idx === 2 ? 0x334155 : 0xe2e8f0, metalness: 0.85, roughness: 0.22 }));
+          swBlade.position.set(sx, 0.85, sz + 0.55);
+          swBlade.rotation.z = (idx % 2 ? 1 : -1) * 0.14;
+          const swGuard = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.06, 0.08), goldMat);
+          swGuard.position.set(sx, 1.52, sz + 0.55);
+          swGuard.rotation.z = swBlade.rotation.z;
+          this.envGroup.add(swBlade, swGuard);
         }
 
-        // 悬崖巨雕（神雕）：黑褐羽毛身躯、双展巨翼、尾羽、金钩喙、琥珀明眸
-        const condor = new THREE.Group();
-        condor.position.set(0, 6.8, -(radius + 2.2));
-        const featherMat = new THREE.MeshStandardMaterial({ color: 0x44403c, roughness: 0.65, metalness: 0.15, emissive: 0x1c1917, emissiveIntensity: 0.35 });
-        const beakMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.3, metalness: 0.5, emissive: 0x92400e, emissiveIntensity: 0.25 });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(1.35, 12, 10), featherMat);
-        body.scale.set(0.85, 1.35, 0.95);
-        condor.add(body);
-        const crest = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.65, 6), featherMat);
-        crest.position.set(0, 2.25, 0.2);
-        crest.rotation.x = -0.3;
-        condor.add(crest);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.68, 10, 8), featherMat);
-        head.position.set(0, 1.65, 0.42);
-        condor.add(head);
-        const beak = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.72, 6), beakMat);
-        beak.rotation.x = Math.PI * 0.62;
-        beak.position.set(0, 1.52, 1.08);
-        condor.add(beak);
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-        const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 6), eyeMat);
-        eyeL.position.set(-0.34, 1.78, 0.84);
-        const eyeR = eyeL.clone();
-        eyeR.position.x = 0.34;
-        condor.add(eyeL, eyeR);
-
-        for (const side of [-1, 1]) {
-          const wingPivot = new THREE.Group();
-          wingPivot.position.set(side * 0.9, 0.55, -0.1);
-          const wing = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.22, 1.45), featherMat);
-          wing.position.set(side * 1.65, 0.2, 0);
-          wing.rotation.z = side * 0.24;
-          wingPivot.add(wing);
-          condor.add(wingPivot);
-          this.condorWings.push({ pivot: wingPivot, side });
+        // 崖畔古松
+        for (const sx of [-9.5, 9.5]) {
+          const pine = createTree('pine');
+          pine.position.set(sx, 0, -(radius + 1.5));
+          pine.scale.setScalar(1.25);
+          this.envGroup.add(pine);
         }
-        this.envGroup.add(condor);
+
+        // 精雕振翅神雕
+        this.condorRig = createMajesticCondor();
+        this.condorRig.group.position.set(0, 7.1, -(radius + 2.4));
+        this.envGroup.add(this.condorRig.group);
       } else if (themeId === 'xiangyang') {
-        // 襄阳城头：城垛女墙与猎猎战旗
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x44403c, roughness: 0.88 });
+        // 襄阳城头：宋军城垛 + 双敌楼 + 飘扬战旗 + 青铜烽火盆 + 小龙女并肩观战！
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x6b5b52, roughness: 0.82 });
         for (let i = 0; i < 20; i++) {
           const a = (i / 20) * Math.PI * 2;
-          const merlon = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.5, 0.7), wallMat);
-          merlon.position.set(Math.sin(a) * (radius + 0.6), 0.75, -Math.cos(a) * (radius + 0.6));
+          const merlon = new THREE.Mesh(new THREE.BoxGeometry(1.85, 1.55, 0.72), wallMat);
+          merlon.position.set(Math.sin(a) * (radius + 0.8), 0.78, -Math.cos(a) * (radius + 0.8));
           merlon.rotation.y = -a;
           this.envGroup.add(merlon);
         }
-        // 高大宋军战旗
-        const bannerMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c, emissive: 0x7f1d1d, emissiveIntensity: 0.3, side: THREE.DoubleSide });
-        for (const sx of [-4.8, 4.8]) {
-          const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 8.2, 6), wallMat);
-          pole.position.set(sx, 4.1, -(radius + 0.2));
+
+        const bannerMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0x991b1b, emissiveIntensity: 0.35, side: THREE.DoubleSide });
+        for (const sx of [-5.2, 5.2]) {
+          const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 8.6, 8), woodMat);
+          pole.position.set(sx, 4.3, -(radius + 0.4));
           this.envGroup.add(pole);
-          const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 3.0), bannerMat);
-          flag.position.set(sx + (sx < 0 ? 0.8 : -0.8), 6.2, -(radius + 0.2));
+          const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.85, 3.2), bannerMat);
+          flag.position.set(sx + (sx < 0 ? 0.92 : -0.92), 6.4, -(radius + 0.4));
           this.envGroup.add(flag);
+          this.banners.push({ mesh: flag, phase: sx });
+
+          const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.45, 0.65, 10), goldMat);
+          bowl.position.set(sx * 1.15, 0.95, -(radius - 1.5));
+          const flame = new THREE.Mesh(new THREE.ConeGeometry(0.46, 1.35, 8), new THREE.MeshBasicMaterial({ color: 0xfb923c }));
+          flame.position.set(sx * 1.15, 1.85, -(radius - 1.5));
+          this.envGroup.add(bowl, flame);
+          this.brazierFlames.push({ mesh: flame, phase: sx });
         }
+
+        // 小龙女立于城头高台与杨过遥相呼应
+        const xlnData = { npcId: 'xiaolongnu', isNpc: true, id: 9002, vx: 0, vz: 0 };
+        const xlnMesh = CH.createArticulatedCharacter(xlnData);
+        xlnMesh.position.set(3.8, 0, -(radius - 1.8));
+        xlnMesh.rotation.y = -0.35;
+        this.envGroup.add(xlnMesh);
+        this.npcList.push({ mesh: xlnMesh, data: xlnData });
       }
 
-      // 氛围浮尘/玉蜂/花瓣/火星粒子场
-      const count = 130;
-      const pos = new Float32Array(count * 3);
-      for (let i = 0; i < count; i++) {
-        pos[i * 3] = (Math.random() - 0.5) * radius * 2.1;
-        pos[i * 3 + 1] = 0.4 + Math.random() * 8.5;
-        pos[i * 3 + 2] = (Math.random() - 0.5) * radius * 2.1;
+      // 4. 氛围流萤/玉蜂/桃花瓣/火星微光粒子场
+      const pCount = 150;
+      const pos = new Float32Array(pCount * 3);
+      for (let i = 0; i < pCount; i++) {
+        pos[i * 3] = (Math.random() - 0.5) * radius * 2.2;
+        pos[i * 3 + 1] = 0.5 + Math.random() * 9.5;
+        pos[i * 3 + 2] = (Math.random() - 0.5) * radius * 2.2;
       }
       const pGeo = new THREE.BufferGeometry();
       pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       this.ambientPts = new THREE.Points(
         pGeo,
-        new THREE.PointsMaterial({ color: cfg.particleColor, size: themeId === 'valley' ? 0.22 : 0.14, transparent: true, opacity: 0.75 })
+        new THREE.PointsMaterial({ color: cfg.particleColor, size: themeId === 'valley' ? 0.24 : 0.16, transparent: true, opacity: 0.85 })
       );
       this.envGroup.add(this.ambientPts);
     }
 
-    /** 构建第一人称武器视图模型（1-2回：右手君子剑；3-4回：独臂左手玄铁重剑 + 黯然销魂左掌） */
+    /** 第一人称《仙剑》级神兵视图模型（锦袍广袖 + 雕花剑格 + 纹理剑刃 + 飘逸剑穗 + 五指黯然左掌） */
     buildViewmodel(weaponId) {
       this.weaponId = weaponId;
       Studio.disposeObject(this.viewmodelRoot);
@@ -439,137 +754,108 @@
 
       const isHeavy = weaponId === 'heavy';
       this.hand = isHeavy ? 'left' : 'right';
-      const side = isHeavy ? -1 : 1; // +1 右手, -1 左手
+      const side = isHeavy ? -1 : 1;
 
       this.weaponPivot = new THREE.Group();
       this.viewmodelRoot.add(this.weaponPivot);
 
-      // 袖袍前臂（宋代江湖宽袖质感）
-      const sleeveMat = new THREE.MeshStandardMaterial({
-        color: isHeavy ? 0x1e293b : 0x1e3a5f,
-        roughness: 0.72,
-      });
-      const cuffMat = new THREE.MeshStandardMaterial({
-        color: isHeavy ? 0xd97706 : 0xe2e8f0,
-        roughness: 0.45,
-        metalness: 0.25,
-      });
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.082, 0.42, 8), sleeveMat);
+      // 锦绣广袖前臂 + 握剑手掌
+      const sleeveMat = new THREE.MeshStandardMaterial({ color: isHeavy ? 0x263142 : 0x1d4b6e, roughness: 0.55 });
+      const cuffMat = new THREE.MeshStandardMaterial({ color: isHeavy ? 0xf59e0b : 0xbae6fd, metalness: 0.35, roughness: 0.35 });
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf4cba8, roughness: 0.55 });
+
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.095, 0.44, 12), sleeveMat);
       arm.position.set(side * 0.08, -0.26, 0.22);
       arm.rotation.set(Math.PI * 0.36, 0, -side * 0.22);
       this.weaponPivot.add(arm);
 
-      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.068, 0.06, 8), cuffMat);
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.064, 0.072, 0.065, 12), cuffMat);
       cuff.position.set(side * 0.03, -0.14, 0.06);
       cuff.rotation.copy(arm.rotation);
       this.weaponPivot.add(cuff);
 
-      // 剑柄与护手
-      const hiltMat = new THREE.MeshStandardMaterial({ color: isHeavy ? 0x451a03 : 0x1f2937, roughness: 0.82 });
-      const guardMat = new THREE.MeshStandardMaterial({
-        color: isHeavy ? 0x92400e : 0xfbbf24,
-        metalness: 0.75,
-        roughness: 0.28,
-      });
+      // 握柄手部立体建模
+      const fist = new THREE.Mesh(new THREE.SphereGeometry(0.048, 10, 8), skinMat);
+      fist.scale.set(1.05, 1.25, 0.92);
+      fist.position.set(0, -0.04, 0.01);
+      this.weaponPivot.add(fist);
 
-      const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, isHeavy ? 0.26 : 0.20, 8), hiltMat);
+      // 缠绳剑柄 + 雕花莲瓣护手
+      const hiltMat = new THREE.MeshStandardMaterial({ color: isHeavy ? 0x451a03 : 0x1e293b, roughness: 0.72 });
+      const guardMat = new THREE.MeshStandardMaterial({ color: isHeavy ? 0xd97706 : 0xfbbf24, metalness: 0.82, roughness: 0.22, emissive: 0x78350f, emissiveIntensity: 0.22 });
+
+      const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, isHeavy ? 0.26 : 0.20, 10), hiltMat);
       hilt.position.set(0, -0.06, 0);
       this.weaponPivot.add(hilt);
 
-      const guard = new THREE.Mesh(
-        new THREE.BoxGeometry(isHeavy ? 0.24 : 0.17, 0.036, isHeavy ? 0.068 : 0.045),
-        guardMat
-      );
-      guard.position.set(0, 0.055, 0);
-      this.weaponPivot.add(guard);
+      const pommel = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), guardMat);
+      pommel.position.set(0, isHeavy ? -0.20 : -0.17, 0);
+      this.weaponPivot.add(pommel);
 
+      const guardCenter = new THREE.Mesh(new THREE.OctahedronGeometry(isHeavy ? 0.055 : 0.042, 0), guardMat);
+      guardCenter.position.set(0, 0.06, 0);
+      const guardWings = new THREE.Mesh(new THREE.BoxGeometry(isHeavy ? 0.24 : 0.18, 0.034, isHeavy ? 0.065 : 0.044), guardMat);
+      guardWings.position.set(0, 0.06, 0);
+      this.weaponPivot.add(guardCenter, guardWings);
+
+      const bladeTex = makeBladeTexture(isHeavy);
       if (isHeavy) {
-        // 玄铁重剑：宽厚无锋陨铁巨剑 + 剑脊暗金内力纹
         const bladeMat = new THREE.MeshStandardMaterial({
-          color: 0x3b4252,
-          metalness: 0.84,
-          roughness: 0.30,
-          emissive: 0x292524,
-          emissiveIntensity: 0.40,
+          map: bladeTex, metalness: 0.84, roughness: 0.26, emissive: 0x451a03, emissiveIntensity: 0.32,
         });
         const blade = new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.86, 0.028), bladeMat);
         blade.position.set(0, 0.50, 0);
         this.weaponPivot.add(blade);
-
         const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.062, 0.13, 4), bladeMat);
         tip.rotation.y = Math.PI * 0.25;
         tip.scale.set(1.4, 1, 0.35);
         tip.position.set(0, 0.99, 0);
         this.weaponPivot.add(tip);
-
-        const rune = new THREE.Mesh(
-          new THREE.BoxGeometry(0.018, 0.68, 0.032),
-          new THREE.MeshBasicMaterial({ color: 0xf59e0b })
-        );
+        const rune = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.68, 0.032), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
         rune.position.set(0, 0.48, 0);
         this.weaponPivot.add(rune);
         this.bladeGlowMat = rune.material;
       } else {
-        // 君子剑：修长青霜剑锋 + 玉质剑穗
         const bladeMat = new THREE.MeshStandardMaterial({
-          color: 0xe2e8f0,
-          metalness: 0.88,
-          roughness: 0.18,
-          emissive: 0x0ea5e9,
-          emissiveIntensity: 0.22,
+          map: bladeTex, metalness: 0.90, roughness: 0.15, emissive: 0x0ea5e9, emissiveIntensity: 0.24,
         });
-        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.88, 0.014), bladeMat);
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.054, 0.88, 0.014), bladeMat);
         blade.position.set(0, 0.50, 0);
         this.weaponPivot.add(blade);
-
-        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.16, 4), bladeMat);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.034, 0.17, 4), bladeMat);
         tip.rotation.y = Math.PI * 0.25;
         tip.scale.set(1.0, 1, 0.32);
         tip.position.set(0, 1.02, 0);
         this.weaponPivot.add(tip);
-
-        const ridge = new THREE.Mesh(
-          new THREE.BoxGeometry(0.012, 0.78, 0.018),
-          new THREE.MeshBasicMaterial({ color: 0x7dd3fc })
-        );
+        const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.78, 0.018), new THREE.MeshBasicMaterial({ color: 0x7dd3fc }));
         ridge.position.set(0, 0.48, 0);
         this.weaponPivot.add(ridge);
         this.bladeGlowMat = ridge.material;
 
-        // 飘逸剑穗
-        const tassel = new THREE.Mesh(
-          new THREE.ConeGeometry(0.022, 0.18, 6),
-          new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.6 })
-        );
-        tassel.position.set(0, -0.22, 0);
+        // 仙剑流光玉穗
+        const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.20, 8), new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.35 }));
+        tassel.position.set(0, -0.26, 0);
         tassel.rotation.z = Math.PI;
         this.weaponPivot.add(tassel);
         this.tassel = tassel;
       }
 
-      // 黯然销魂掌 · 雕塑感五指左掌 + 双重旋转水墨金芒内力环
+      // 黯然销魂掌 · 雕塑感五指左掌 + 双重旋转金芒太极环
       this.palmPivot = new THREE.Group();
       this.palmPivot.visible = false;
       const palmMat = new THREE.MeshStandardMaterial({
-        color: 0xfde68a,
-        emissive: 0xf59e0b,
-        emissiveIntensity: 0.65,
-        roughness: 0.28,
-        transparent: true,
-        opacity: 0.92,
+        color: 0xfde68a, emissive: 0xf59e0b, emissiveIntensity: 0.65, roughness: 0.28, transparent: true, opacity: 0.94,
       });
-      const palmBase = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.058, 0.028, 12), palmMat);
+      const palmBase = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.058, 0.028, 14), palmMat);
       palmBase.rotation.x = Math.PI * 0.5;
       palmBase.scale.set(1.0, 1.0, 1.15);
       this.palmPivot.add(palmBase);
-      // 四指 + 拇指
-      const fingerSpecs = [
+      for (const [fx, fy, fh, fr, rot] of [
         [-0.048, 0.105, 0.095, 0.014, 0.14],
         [-0.016, 0.120, 0.112, 0.015, 0.04],
         [0.018, 0.116, 0.106, 0.014, -0.05],
         [0.048, 0.096, 0.084, 0.013, -0.16],
-      ];
-      for (const [fx, fy, fh, fr, rot] of fingerSpecs) {
+      ]) {
         const f = new THREE.Mesh(new THREE.CylinderGeometry(fr * 0.72, fr, fh, 8), palmMat);
         f.position.set(fx, fy, 0);
         f.rotation.z = rot;
@@ -580,167 +866,20 @@
       thumb.rotation.z = -0.82;
       this.palmPivot.add(thumb);
 
-      const auraOuter = new THREE.Mesh(
-        new THREE.TorusGeometry(0.24, 0.014, 8, 28),
-        new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.85 })
-      );
+      const auraOuter = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.014, 8, 28), new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.85 }));
       auraOuter.position.z = -0.04;
-      this.palmPivot.add(auraOuter);
-      const auraInner = new THREE.Mesh(
-        new THREE.TorusGeometry(0.16, 0.010, 8, 24),
-        new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.75 })
-      );
+      const auraInner = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.010, 8, 24), new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.78 }));
       auraInner.position.z = -0.03;
-      this.palmPivot.add(auraInner);
+      this.palmPivot.add(auraOuter, auraInner);
       this.palmAuraOuter = auraOuter;
       this.viewmodelRoot.add(this.palmPivot);
 
-      // 弹反火花点光 + 第一人称剑锋高光补光（确保任意朝向剑刃金属质感饱满）
+      // 弹反火花点光 + 第一人称剑锋高光补光
       this.parryLight = new THREE.PointLight(0xfef08a, 0, 5.5);
       this.parryLight.position.set(0, -0.05, -0.75);
-      this.viewmodelRoot.add(this.parryLight);
-
-      const vmFill = new THREE.PointLight(isHeavy ? 0xffedd5 : 0xe0f2fe, 0.85, 3.2);
-      vmFill.position.set(side * 0.25, 0.22, -0.35);
-      this.viewmodelRoot.add(vmFill);
-    }
-
-    createEnemyMesh(e, palette) {
-      const root = new THREE.Group();
-      const robeColor = e.isBoss ? palette.bossRobe : palette.robe;
-      const trimColor = e.isBoss ? palette.bossTrim : palette.trim;
-      const scale = e.isBoss ? 1.18 : (e.kind === 'brute' ? 1.12 : 0.98);
-
-      const robeMat = new THREE.MeshStandardMaterial({ color: robeColor, roughness: 0.68, metalness: 0.12 });
-      const trimMat = new THREE.MeshStandardMaterial({ color: trimColor, roughness: 0.4, metalness: 0.45, emissive: trimColor, emissiveIntensity: 0.16 });
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf1c27d, roughness: 0.65 });
-
-      const body = new THREE.Group();
-      body.scale.setScalar(scale);
-      root.add(body);
-
-      // 下摆长袍
-      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.48, 0.92, 10), robeMat);
-      skirt.position.y = 0.46;
-      body.add(skirt);
-
-      // 上身武服与束腰
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.66, 10), robeMat);
-      torso.position.y = 1.20;
-      body.add(torso);
-
-      const sash = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.14, 10), trimMat);
-      sash.position.y = 0.92;
-      body.add(sash);
-
-      // 肩甲 / 披肩
-      const shoulders = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.18, 0.34), trimMat);
-      shoulders.position.y = 1.48;
-      body.add(shoulders);
-
-      // 头部 + 斗笠/发冠/法帽
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), skinMat);
-      head.position.y = 1.72;
-      body.add(head);
-
-      const hatColor = e.bossId === 'jinlun' ? 0xf59e0b : (e.bossId === 'limochou' ? 0x3b0764 : 0x1e293b);
-      const hat = new THREE.Mesh(
-        e.kind === 'archer'
-          ? new THREE.ConeGeometry(0.46, 0.24, 10)
-          : new THREE.CylinderGeometry(0.14, 0.22, 0.22, 8),
-        new THREE.MeshStandardMaterial({ color: hatColor, roughness: 0.5 })
-      );
-      hat.position.y = e.kind === 'archer' ? 1.92 : 1.94;
-      body.add(hat);
-
-      // 凌厉双目
-      const eyeMat = new THREE.MeshBasicMaterial({ color: e.isBoss ? 0xfef08a : 0xfca5a5 });
-      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.038, 6, 6), eyeMat);
-      eyeL.position.set(-0.08, 1.74, 0.19);
-      const eyeR = eyeL.clone();
-      eyeR.position.x = 0.08;
-      body.add(eyeL, eyeR);
-
-      // 右手持武（按 Boss 定制）
-      const armPivot = new THREE.Group();
-      armPivot.position.set(0.44, 1.42, 0.08);
-      const weaponMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.22 });
-
-      if (e.bossId === 'limochou') {
-        // 拂尘
-        const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.72, 6), trimMat);
-        stick.rotation.x = Math.PI * 0.45;
-        stick.position.set(0, -0.05, 0.35);
-        const whisk = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.65, 8), new THREE.MeshStandardMaterial({ color: 0xf5d0fe, emissive: 0xc026d3, emissiveIntensity: 0.4 }));
-        whisk.rotation.x = Math.PI * 0.45;
-        whisk.position.set(0, -0.08, 0.85);
-        armPivot.add(stick, whisk);
-      } else if (e.bossId === 'jinlun') {
-        // 金轮法王：背后五轮大转金环！
-        const wheelHalo = new THREE.Group();
-        wheelHalo.position.set(0, 1.38, -0.32);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.88, roughness: 0.2, emissive: 0xb45309, emissiveIntensity: 0.38 });
-        for (let k = 0; k < 5; k++) {
-          const ang = (k / 5) * Math.PI * 2;
-          const wMesh = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.055, 8, 16), wheelMat);
-          wMesh.position.set(Math.cos(ang) * 0.85, Math.sin(ang) * 0.85, 0);
-          wheelHalo.add(wMesh);
-        }
-        body.add(wheelHalo);
-        root.userData.wheelHalo = wheelHalo;
-      } else {
-        // 剑 / 重刃
-        const bladeLen = e.bossId === 'dugu' ? 1.45 : (e.kind === 'brute' ? 1.25 : 0.95);
-        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.03, bladeLen), weaponMat);
-        blade.position.set(0, -0.04, bladeLen * 0.55);
-        armPivot.add(blade);
-      }
-      body.add(armPivot);
-
-      // 地面脚下预警光环（白/红/金）
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, side: THREE.DoubleSide });
-      const ring = new THREE.Mesh(new THREE.RingGeometry(e.radius * 0.85, e.radius * 1.18, 24), ringMat);
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.05;
-      root.add(ring);
-
-      // 头顶攻击预警光晶 / 破防眩晕环
-      const perilMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0 });
-      const perilBeacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 0), perilMat);
-      perilBeacon.position.y = e.height + 0.52;
-      root.add(perilBeacon);
-
-      const staggerRing = new THREE.Mesh(
-        new THREE.TorusGeometry(0.45, 0.05, 6, 16),
-        new THREE.MeshBasicMaterial({ color: 0xfde047 })
-      );
-      staggerRing.rotation.x = Math.PI / 2;
-      staggerRing.position.y = e.height + 0.25;
-      staggerRing.visible = false;
-      root.add(staggerRing);
-
-      // 头顶迷你血条（小兵用）
-      let hpFill = null;
-      if (!e.isBoss) {
-        const barBg = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.10), new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide }));
-        barBg.position.y = e.height + 0.16;
-        hpFill = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 0.06), new THREE.MeshBasicMaterial({ color: 0xf43f5e, side: THREE.DoubleSide }));
-        hpFill.position.set(0, 0, 0.01);
-        barBg.add(hpFill);
-        root.add(barBg);
-        root.userData.hpBar = barBg;
-        root.userData.hpFill = hpFill;
-      }
-
-      root.userData.body = body;
-      root.userData.armPivot = armPivot;
-      root.userData.robeMat = robeMat;
-      root.userData.ringMat = ringMat;
-      root.userData.ring = ring;
-      root.userData.perilBeacon = perilBeacon;
-      root.userData.perilMat = perilMat;
-      root.userData.staggerRing = staggerRing;
-      return root;
+      const vmFill = new THREE.PointLight(isHeavy ? 0xffedd5 : 0xe0f2fe, 1.05, 3.6);
+      vmFill.position.set(side * 0.25, 0.24, -0.35);
+      this.viewmodelRoot.add(this.parryLight, vmFill);
     }
 
     spawnSparks(x, y, z, color, count = 14, speed = 7.5) {
@@ -774,11 +913,7 @@
     syncSlashes(state) {
       while (this.slashMeshes.length < state.slashes.length) {
         const mat = new THREE.MeshBasicMaterial({
-          color: 0x7dd3fc,
-          transparent: true,
-          opacity: 0.85,
-          side: THREE.DoubleSide,
-          depthWrite: false,
+          color: 0x7dd3fc, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false,
         });
         const m = new THREE.Mesh(this.slashGeo, mat);
         this.fxGroup.add(m);
@@ -823,10 +958,10 @@
         if (!mesh) {
           const mat = new THREE.MeshBasicMaterial({ color: p.color || '#7dd3fc', side: THREE.DoubleSide });
           if (p.kind === 'wheel') {
-            mesh = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.09, 6, 16), mat);
+            mesh = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.09, 8, 18), mat);
             mesh.rotation.x = Math.PI / 2;
           } else if (p.kind === 'jade_wave' || p.kind === 'heavy_wave') {
-            mesh = new THREE.Mesh(new THREE.RingGeometry(0.45, p.kind === 'heavy_wave' ? 1.35 : 0.92, 16, 1, -Math.PI * 0.45, Math.PI * 0.9), mat);
+            mesh = new THREE.Mesh(new THREE.RingGeometry(0.45, p.kind === 'heavy_wave' ? 1.38 : 0.94, 18, 1, -Math.PI * 0.45, Math.PI * 0.9), mat);
             mesh.rotation.x = Math.PI / 2;
           } else {
             mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.18, 0), mat);
@@ -836,13 +971,9 @@
           this.projMeshes.set(p.id, mesh);
         }
         mesh.position.set(p.x, p.y || 1.35, p.z);
-        if (p.kind === 'wheel') {
-          mesh.rotation.z += 0.35;
-        } else if (p.kind === 'jade_wave' || p.kind === 'heavy_wave') {
-          mesh.rotation.z = -p.yaw;
-        } else {
-          mesh.rotation.y = Math.atan2(p.vx, p.vz);
-        }
+        if (p.kind === 'wheel') mesh.rotation.z += 0.38;
+        else if (p.kind === 'jade_wave' || p.kind === 'heavy_wave') mesh.rotation.z = -p.yaw;
+        else mesh.rotation.y = Math.atan2(p.vx, p.vz);
       }
       for (const [id, mesh] of this.projMeshes.entries()) {
         if (!alive.has(id)) {
@@ -858,7 +989,6 @@
       const isHeavy = this.weaponId === 'heavy';
       const side = isHeavy ? -1 : 1;
 
-      // 弹簧阻尼视角惯性摆动（Dishonored / Ghostrunner 核心手感）
       let dYaw = state.yaw - this.lastYaw;
       while (dYaw > Math.PI) dYaw -= Math.PI * 2;
       while (dYaw < -Math.PI) dYaw += Math.PI * 2;
@@ -874,7 +1004,6 @@
       const bobX = Math.cos(this.bobPhase) * (0.008 + moveSpd * 0.003);
       const bobY = Math.abs(Math.sin(this.bobPhase)) * (0.010 + moveSpd * 0.004);
 
-      // 基础待机姿态（右手君子剑 / 左手玄铁重剑，构图开阔不遮挡中心视野）
       let px = side * (isHeavy ? 0.46 : 0.36) + this.swayYaw * 0.45 + bobX;
       let py = (isHeavy ? -0.44 : -0.34) + this.swayPitch * 0.35 - bobY;
       let pz = isHeavy ? -0.74 : -0.60;
@@ -882,7 +1011,6 @@
       let ry = side * (isHeavy ? 0.44 : 0.28);
       let rz = side * (isHeavy ? 0.32 : 0.18);
 
-      // 格挡 / 弹反姿态：横剑挡于胸前
       if (state.parryTimer > 0 || state.guardHeld) {
         const parryKick = state.parryFlash > 0 ? Math.sin((state.parryFlash / 0.28) * Math.PI) * 0.16 : 0;
         px = side * 0.06;
@@ -893,13 +1021,11 @@
         rz = side * 1.24;
       }
 
-      // 三段挥剑轨迹动画
       if (state.swingTimer > 0) {
         const p = 1 - state.swingTimer / Math.max(0.05, state.swingDur);
         const ease = p < 0.26 ? -(p / 0.26) * 0.35 : Math.sin(((p - 0.26) / 0.74) * Math.PI);
         const dir = state.comboStep === 2 ? -1 : 1;
         if (state.comboStep === 3) {
-          // 第三式：力劈华山重斩
           px = side * 0.12 * (1 - p);
           py = -0.14 + Math.cos(p * Math.PI) * 0.32;
           pz = -0.58 - ease * 0.28;
@@ -907,16 +1033,15 @@
           ry = side * 0.25 * (1 - p);
           rz = side * 0.35 * (1 - p);
         } else {
-          px = side * (0.34 - ease * 0.68 * dir);
-          py = -0.26 + ease * 0.12;
-          pz = -0.54 - ease * 0.26;
+          px = side * (0.36 - ease * 0.68 * dir);
+          py = -0.28 + ease * 0.12;
+          pz = -0.56 - ease * 0.26;
           rx = -0.42 - ease * 0.78;
           ry = side * (0.28 + ease * 1.35 * dir);
           rz = side * (0.20 + ease * 1.15 * dir);
         }
       }
 
-      // 黯然销魂掌特写动画（收剑出左掌，居中偏左优雅推掌不挡准星）
       if (state.palmAnimTimer > 0) {
         const p = 1 - state.palmAnimTimer / 0.58;
         const thrust = Math.sin(p * Math.PI);
@@ -933,12 +1058,8 @@
       this.weaponPivot.position.set(px, py, pz);
       this.weaponPivot.rotation.set(rx, ry, rz);
 
-      if (this.tassel) {
-        this.tassel.rotation.x = Math.sin(this.t * 6) * 0.2 + moveSpd * 0.04;
-      }
-      if (this.parryLight) {
-        this.parryLight.intensity = state.parryFlash > 0 ? (state.parryFlash / 0.28) * 6.5 : 0;
-      }
+      if (this.tassel) this.tassel.rotation.x = Math.sin(this.t * 6) * 0.22 + moveSpd * 0.04;
+      if (this.parryLight) this.parryLight.intensity = state.parryFlash > 0 ? (state.parryFlash / 0.28) * 6.5 : 0;
       if (this.bladeGlowMat) {
         const chiReady = state.chi >= state.skill.cost;
         this.bladeGlowMat.color.setHex(
@@ -951,7 +1072,6 @@
       this.t += dt;
       this.ensureScene(state);
 
-      // 摄像机尺寸同步
       const w = this.gfx.w || 960;
       const h = this.gfx.h || 540;
       if (Math.abs(this.camera.aspect - w / h) > 0.001) {
@@ -959,7 +1079,6 @@
         this.camera.updateProjectionMatrix();
       }
 
-      // FOV 微动态反馈（丝滑无眩晕）
       this.fovTarget += (68 - this.fovTarget) * Math.min(1, dt * 7);
       if (Math.abs(this.fovCurrent - this.fovTarget) > 0.05) {
         this.fovCurrent += (this.fovTarget - this.fovCurrent) * Math.min(1, dt * 14);
@@ -967,11 +1086,9 @@
         this.camera.updateProjectionMatrix();
       }
 
-      // 微震动（仅位移，不做旋转滚转以防晕 3D）
       this.shakeMag = Math.max(0, this.shakeMag - dt * 1.8);
       const sx = (Math.random() - 0.5) * this.shakeMag * 0.16;
       const sy = (Math.random() - 0.5) * this.shakeMag * 0.14;
-
       const moveSpd = Math.hypot(state.vx, state.vz);
       const camBob = Math.sin(this.bobPhase * 2) * Math.min(0.035, moveSpd * 0.004);
       this.camera.position.set(state.px + sx, CH.EYE_HEIGHT + state.py + camBob + sy, state.pz);
@@ -979,83 +1096,47 @@
       this.camera.rotation.x = state.pitch;
       this.camera.rotation.z = 0;
 
-      // 更新第一人称武器视图模型
       this.updateViewmodel(state, dt);
 
-      // 更新火盆火焰与神雕振翅
-      for (const f of this.brazierFlames) {
-        const s = 0.85 + Math.sin(this.t * 11 + f.phase) * 0.18;
-        f.mesh.scale.set(1, s, 1);
+      // 动态场景元素：宫灯摇曳、火盆焰动、战旗飘扬、神雕双段振翅、小龙女凌波呼吸
+      for (const l of this.lanterns) {
+        l.pivot.rotation.z = Math.sin(this.t * 1.8 + l.phase) * 0.09;
+        l.pivot.rotation.x = Math.cos(this.t * 1.4 + l.phase) * 0.06;
       }
-      for (const cw of this.condorWings) {
-        cw.pivot.rotation.z = cw.side * (0.18 + Math.sin(this.t * 1.9) * 0.22);
+      for (const f of this.brazierFlames) {
+        f.mesh.scale.set(1, 0.85 + Math.sin(this.t * 12 + f.phase) * 0.22, 1);
+      }
+      for (const b of this.banners) {
+        b.mesh.rotation.y = Math.sin(this.t * 3.4 + b.phase) * 0.24;
+      }
+      if (this.condorRig) {
+        for (const wSeg of this.condorRig.wings) {
+          const flap = Math.sin(this.t * 2.1);
+          wSeg.innerPivot.rotation.z = wSeg.side * (0.16 + flap * 0.26);
+          wSeg.outerPivot.rotation.z = wSeg.side * (0.12 + Math.sin(this.t * 2.1 - 0.5) * 0.34);
+        }
+        this.condorRig.headPivot.rotation.y = Math.sin(this.t * 0.9) * 0.28;
+      }
+      for (const npc of this.npcList) {
+        CH.animateArticulatedCharacter(npc.mesh, npc.data, this.t, dt, this.camera.position, 0);
       }
       if (this.ambientPts) {
-        this.ambientPts.rotation.y += dt * 0.05;
+        this.ambientPts.rotation.y += dt * 0.06;
       }
 
-      // 同步敌人 3D 模型
+      // 同步并驱动所有 16 关节灵动武林人物
       const aliveIds = new Set();
       for (const e of state.enemies) {
         aliveIds.add(e.id);
         let mesh = this.enemyMeshes.get(e.id);
         if (!mesh) {
-          mesh = this.createEnemyMesh(e, state.chapter.enemyPalette);
+          mesh = CH.createArticulatedCharacter(e, state.chapter.enemyPalette);
           this.enemyGroup.add(mesh);
           this.enemyMeshes.set(e.id, mesh);
         }
         mesh.position.set(e.x, 0, e.z);
         mesh.rotation.y = e.yaw;
-
-        const ud = mesh.userData;
-        // 受击闪白
-        ud.robeMat.emissive.setHex(e.hitFlash > 0 ? 0xffffff : 0x000000);
-        ud.robeMat.emissiveIntensity = e.hitFlash > 0 ? 0.65 : 0;
-
-        // 攻击起手与挥砍动画
-        if (e.staggerTimer > 0) {
-          ud.body.rotation.x = 0.28;
-          ud.staggerRing.visible = true;
-          ud.staggerRing.rotation.z += dt * 6;
-          ud.perilMat.opacity = 0;
-          ud.ringMat.color.setHex(0xfde047);
-          ud.ringMat.opacity = 0.68;
-        } else {
-          ud.staggerRing.visible = false;
-          ud.body.rotation.x = 0;
-          if (e.state === 'windup') {
-            const prog = 1 - e.stateTimer / Math.max(0.05, e.windupMax);
-            ud.armPivot.rotation.x = -0.9 - prog * 0.7;
-            const col = e.attackKind === 'unblock' ? 0xfacc15 : (e.attackKind === 'peril' ? 0xf43f5e : 0xe2e8f0);
-            ud.ringMat.color.setHex(col);
-            ud.ringMat.opacity = 0.45 + prog * 0.5;
-            ud.perilMat.color.setHex(col);
-            ud.perilMat.opacity = 0.55 + Math.sin(this.t * 24) * 0.35;
-            ud.perilBeacon.scale.setScalar(0.8 + prog * 0.75);
-            ud.perilBeacon.rotation.y += dt * 8;
-          } else if (e.swingVisual > 0) {
-            ud.armPivot.rotation.x = 1.1;
-            ud.perilMat.opacity = 0;
-            ud.ringMat.opacity = 0.25;
-          } else {
-            ud.armPivot.rotation.x = Math.sin(this.t * 4 + e.id) * 0.14;
-            ud.perilMat.opacity = 0;
-            ud.ringMat.color.setHex(state.lockTargetId === e.id ? 0x38bdf8 : 0xffffff);
-            ud.ringMat.opacity = state.lockTargetId === e.id ? 0.65 : 0.18;
-          }
-        }
-
-        // 金轮法王五轮旋转
-        if (ud.wheelHalo) {
-          ud.wheelHalo.rotation.z += dt * (e.phase2 ? 5.6 : 2.8);
-        }
-        // 小兵血条朝向摄像机
-        if (ud.hpBar && ud.hpFill) {
-          ud.hpBar.lookAt(this.camera.position);
-          const ratio = Math.max(0.01, e.hp / e.maxHp);
-          ud.hpFill.scale.x = ratio;
-          ud.hpFill.position.x = -(1 - ratio) * 0.44;
-        }
+        CH.animateArticulatedCharacter(mesh, e, this.t, dt, this.camera.position, state.lockTargetId);
       }
       for (const [id, mesh] of this.enemyMeshes.entries()) {
         if (!aliveIds.has(id)) {
@@ -1065,7 +1146,6 @@
         }
       }
 
-      // 飞行物 & 剑光 & 火花
       this.syncProjectiles(state);
       this.syncSlashes(state);
 
@@ -1097,6 +1177,7 @@
       this.projMeshes.clear();
       this.slashMeshes = [];
       this.sparkList = [];
+      this.npcList = [];
     }
   }
 
