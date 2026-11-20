@@ -111,6 +111,26 @@ module.exports = function run(ok) {
     ok(s.levelWon && ['S', 'A', 'B', 'C'].includes(s.rank), `[古墓丽影] 夺取亚特兰蒂斯神骸触发通关结算（评分 ${s.rank}）`);
   }
 
+  // 5b) 肾上腺素闪避（子弹时间）+ 2.4x 金色暴击校验
+  {
+    const s = TR.newState(2);
+    const trex = s.enemies.find((e) => e.kind === 'trex');
+    trex.awoken = true;
+    trex.state = 'windup';
+    trex.stateTimer = 0.4;
+    s.px = trex.x;
+    s.py = 0.05;
+    s.pz = trex.z + 5.2;
+    let adrenTriggered = false;
+    TR.step(s, { dodgePressed: true, moveX: 1 });
+    for (const ev of s.events) if (ev.type === 'adrenaline_dodge') adrenTriggered = true;
+    ok(adrenTriggered && s.adrenalineTimer > 1.0, '[古墓丽影] 霸王龙蓄力瞬间翻滚触发肾上腺素子弹时间');
+
+    const hpBefore = trex.hp;
+    TR.step(s, { fireHeld: true });
+    ok(hpBefore - trex.hp >= 25, `[古墓丽影] 子弹时间双枪触发 2.4× 金色暴击伤害（单发 ${hpBefore - trex.hp}）`);
+  }
+
   // 6) 60fps 物理性能预算检验
   {
     const s = TR.newState(2);

@@ -859,7 +859,7 @@ body.game-no-status #status { display: none; }
 .tr-top-left {
   position: absolute; left: 16px; top: 14px;
   display: flex; flex-direction: column; gap: 5px;
-  max-width: min(320px, 34vw);
+  max-width: min(295px, 28vw);
 }
 .tr-title-tag {
   font-size: 14px; font-weight: 800; letter-spacing: 0.8px;
@@ -907,6 +907,23 @@ body.game-no-status #status { display: none; }
   color: #fef08a; font-size: 13.5px; font-weight: 800;
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
   white-space: nowrap;
+}
+.tr-aim-reticle {
+  position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%);
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.8px solid rgba(248, 250, 252, 0.85);
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.55);
+  transition: transform 0.12s, border-color 0.12s;
+}
+.tr-aim-reticle span {
+  position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+}
+.tr-aim-reticle.adren {
+  border-color: #facc15;
+  transform: translate(-50%, -50%) scale(1.25);
+  box-shadow: 0 0 22px rgba(250, 204, 21, 0.95);
 }
 
 .tr-intro-banner {

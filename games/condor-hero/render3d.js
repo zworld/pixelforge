@@ -435,6 +435,10 @@
       this.viewmodelRoot = new THREE.Group();
       this.camera.add(this.viewmodelRoot);
 
+      this.post = Studio.PBR ? new Studio.PBR.PostPipeline(this.gl) : null;
+      this.envRT = null;
+      this.godRayMats = [];
+
       this.enemyMeshes = new Map();
       this.projMeshes = new Map();
       this.slashMeshes = [];
@@ -569,16 +573,19 @@
         }
       }
 
-      // 体积感丁达尔神光柱（仙剑仙气核心层次！）
-      const shaftMat = new THREE.MeshBasicMaterial({
-        color: cfg.shaftColor,
-        transparent: true,
-        opacity: 0.085,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      });
+      // 体积感柔边 GLSL 丁达尔神光柱 + PMREM IBL 环境金属反射！
+      this.godRayMats = [];
+      if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
+      if (Studio.PBR) {
+        this.envRT = Studio.PBR.createEnvMap(this.gl, { bg: cfg.fog, sky: cfg.hemiSky, sun: cfg.sunColor, warm: cfg.lantern, cool: cfg.accent });
+        this.scene.environment = this.envRT.texture;
+      }
+      const shaftMat = Studio.PBR
+        ? Studio.PBR.createGodRayMaterial(cfg.shaftColor, 0.22)
+        : new THREE.MeshBasicMaterial({ color: cfg.shaftColor, transparent: true, opacity: 0.085, side: THREE.DoubleSide, depthWrite: false });
+      this.godRayMats.push(shaftMat);
       for (const sx of [-6, 0, 6]) {
-        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 3.2, 22, 12, 1, true), shaftMat);
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 3.4, 22, 16, 1, true), shaftMat);
         shaft.position.set(sx, 10, -radius * 0.45);
         shaft.rotation.z = -0.22;
         shaft.rotation.x = 0.14;
@@ -1165,10 +1172,24 @@
         sp.mesh.scale.setScalar(Math.max(0.1, sp.life / sp.maxLife));
       }
 
-      this.gl.render(this.scene, this.camera);
+      for (const gm of this.godRayMats) if (gm.uniforms) gm.uniforms.uTime.value = this.t;
+
+      if (this.post) {
+        this.post.render(this.scene, this.camera, w, h, {
+          bloom: 0.42,
+          warmth: 0.05,
+          vignette: 0.34,
+          adrenaline: state.parryFlash > 0 ? 0.65 : 0,
+        });
+      } else {
+        this.gl.render(this.scene, this.camera);
+      }
     }
 
     dispose() {
+      if (this.post) { this.post.dispose(); this.post = null; }
+      if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
+      this.scene.environment = null;
       Studio.disposeObject(this.scene);
       this.sparkGeo.dispose();
       this.slashGeo.dispose();

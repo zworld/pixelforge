@@ -162,6 +162,10 @@
       lockTargetId: null,
       flareTimer: 0,
       instinctOn: false,
+      adrenalineTimer: 0,
+      adrenalineCd: 0,
+      aiming: false,
+      aimHoldTimer: 0,
       // 关卡机关与实体
       blocks,
       pushBlocks,
@@ -452,8 +456,11 @@
   function shootWeapon(s, heavy) {
     const target = findCombatTarget(s);
     s.weaponsDrawn = true;
+    s.aimHoldTimer = 0.55;
     s.lockTargetId = target ? target.id : null;
-    const dmg = heavy ? 36 : 12;
+    const isAdrenCrit = s.adrenalineTimer > 0;
+    const baseDmg = heavy ? 36 : 12;
+    const dmg = isAdrenCrit ? Math.round(baseDmg * 2.4) : baseDmg;
 
     if (heavy) {
       s.heavyCd = 1.15;
@@ -488,7 +495,7 @@
       const kb = heavy ? (target.isBoss ? 2.2 : 6.2) : (target.isBoss ? 0.4 : 1.8);
       target.vx += (dx / d) * kb;
       target.vz += (dz / d) * kb;
-      s.events.push({ type: 'hit', x: tx, y: ty, z: tz, heavy, boss: !!target.isBoss });
+      s.events.push({ type: 'hit', x: tx, y: ty, z: tz, heavy: heavy || isAdrenCrit, crit: isAdrenCrit, boss: !!target.isBoss });
 
       if (target.hp <= 0) {
         target.state = 'dead';
@@ -592,6 +599,11 @@
     s.rollTimer = Math.max(0, s.rollTimer - dt);
     s.leverTimer = Math.max(0, s.leverTimer - dt);
     s.flareTimer = Math.max(0, s.flareTimer - dt);
+    s.adrenalineTimer = Math.max(0, s.adrenalineTimer - dt);
+    s.adrenalineCd = Math.max(0, s.adrenalineCd - dt);
+    s.aimHoldTimer = Math.max(0, s.aimHoldTimer - dt);
+    s.aiming = !!input.fireHeld || s.aimHoldTimer > 0;
+    const wasOnGround = s.onGround;
     s.coyoteTimer = s.onGround ? 0.14 : Math.max(0, s.coyoteTimer - dt);
     s.jumpBufTimer = input.jumpPressed ? 0.15 : Math.max(0, s.jumpBufTimer - dt);
 
@@ -786,6 +798,20 @@
           s.rollKind = 'front';
         }
         s.events.push({ type: 'dash', rollKind: s.rollKind, x: s.px, z: s.pz });
+
+        // 肾上腺素闪避（Anniversary 经典子弹时间）：在野兽/霸王龙扑击或蓄力瞬间翻滚触发！
+        if (s.adrenalineCd <= 0) {
+          const threat = s.enemies.find((e) =>
+            e.hp > 0 && (e.state === 'windup' || e.state === 'lunge') &&
+            Math.hypot(e.x - s.px, e.z - s.pz) <= (e.isBoss ? 8.2 : 5.4)
+          );
+          if (threat) {
+            s.adrenalineTimer = 1.45;
+            s.adrenalineCd = 4.5;
+            s.score += 180;
+            s.events.push({ type: 'adrenaline_dodge', x: s.px, y: s.py + 1.1, z: s.pz, targetId: threat.id });
+          }
+        }
       }
 
       // (C) 水平速度与跳跃
@@ -819,6 +845,9 @@
       // 执行 3D 物理碰撞移动
       if (!s.pushingBlockId) {
         moveAndCollidePlayer(s, dt, solids);
+        if (!wasOnGround && s.onGround) {
+          s.events.push({ type: 'land_dust', x: s.px, y: s.py + 0.05, z: s.pz });
+        }
       }
 
       // 空中自动检测抓崖挂壁！
@@ -938,11 +967,12 @@
       }
     }
 
-    // 8) 敌人 AI 更新（秘鲁雪狼 / 古殿巨熊 / 史前霸王龙 T-Rex Boss！）
+    // 8) 敌人 AI 更新（秘鲁雪狼 / 古殿巨熊 / 史前霸王龙 T-Rex Boss；肾上腺素子弹时间内减速至 32%！）
+    const eDt = s.adrenalineTimer > 0 ? dt * 0.32 : dt;
     for (const e of s.enemies) {
       if (e.hp <= 0) continue;
       e.hitFlash = Math.max(0, e.hitFlash - dt);
-      e.attackCd = Math.max(0, e.attackCd - dt);
+      e.attackCd = Math.max(0, e.attackCd - eDt);
 
       const dx = s.px - e.x;
       const dz = s.pz - e.z;
@@ -1008,8 +1038,8 @@
       }
 
       // 敌人水平移动与简单石柱/墙体阻挡
-      const nx = e.x + e.vx * dt;
-      const nz = e.z + e.vz * dt;
+      const nx = e.x + e.vx * eDt;
+      const nz = e.z + e.vz * eDt;
       let blockedX = false, blockedZ = false;
       for (const box of solids) {
         if (box.maxY <= e.y + 0.25 || box.minY >= e.y + e.height) continue;

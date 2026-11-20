@@ -53,6 +53,7 @@
             <select id="trLevelSel" title="选择秘鲁探险章节">${opts}</select>
             <button id="trBtnInstinct" class="toggle" title="求生本能：金色高亮机关与秘密 (Q)">👁️ 求生本能</button>
             <button id="trBtnFlare" class="toggle" title="点燃绿色照明弹 (V)">🟢 照明弹</button>
+            <button id="trBtnQuality" class="toggle active" title="切换 3A 极致光影泛光 / 流畅模式">✨ 3A光影</button>
             <button id="trBtnRestart" class="primary" title="重开本关 (R)">↻ 重开</button>
             <button id="trBtnTouch" class="toggle" title="开关移动端探险手柄">🎮 触屏键</button>
           </div>
@@ -77,6 +78,7 @@
             </div>
 
             <div class="tr-callout hidden" id="trCallout">🏺 发现古墓秘密！</div>
+            <div class="tr-aim-reticle hidden" id="trAimReticle"><span></span></div>
             <div class="tr-prompt hidden" id="trPrompt">[E] 拉动太阳拉杆</div>
 
             <div class="tr-bottom-left">
@@ -142,6 +144,10 @@
         if ($('trFloatFlare')) $('trFloatFlare').classList.toggle('active', flare);
         if ($('trInstinctTint')) $('trInstinctTint').classList.toggle('hidden', !inst);
         if ($('trBtnTouch')) $('trBtnTouch').classList.toggle('active', this.touchEnabled);
+        if ($('trBtnQuality') && this.renderer) {
+          $('trBtnQuality').classList.toggle('active', this.renderer.aaaQuality);
+          $('trBtnQuality').textContent = this.renderer.aaaQuality ? '✨ 3A光影' : '⚡ 流畅画质';
+        }
         if ($('trTouchControls')) $('trTouchControls').classList.toggle('hidden', !this.touchEnabled);
         if ($('trFloatBgm')) $('trFloatBgm').classList.toggle('active', ctx.audio.bgmOn);
         if ($('trLevelSel')) $('trLevelSel').value = String(this.levelIdx);
@@ -188,8 +194,18 @@
         ctx.audio.play(ev.type, ev);
         switch (ev.type) {
           case 'hit':
-            this.renderer?.spawnSparks(ev.x, ev.y, ev.z, ev.heavy ? 0xf97316 : 0xfef08a, ev.heavy ? 18 : 8, ev.heavy ? 9 : 6);
-            if (ev.heavy) this.renderer?.addShake(0.22);
+            this.renderer?.spawnSparks(ev.x, ev.y, ev.z, ev.crit ? 0xfacc15 : (ev.heavy ? 0xf97316 : 0xfef08a), ev.crit ? 26 : (ev.heavy ? 18 : 8), ev.crit ? 11 : (ev.heavy ? 9 : 6));
+            if (ev.heavy || ev.crit) this.renderer?.addShake(ev.crit ? 0.28 : 0.22);
+            break;
+          case 'adrenaline_dodge':
+            this.renderer?.spawnSparks(ev.x, ev.y, ev.z, 0xfde047, 22, 8);
+            this.renderer?.addShake(0.24);
+            this.showCallout('⚡ 肾上腺素闪避 · 子弹时间 2.4× 暴击！', 'gold');
+            ctx.audio.play('parry', ev);
+            ctx.input.haptic(24);
+            break;
+          case 'land_dust':
+            this.renderer?.spawnSparks(ev.x, ev.y, ev.z, 0xc2b29b, 6, 3.2);
             break;
           case 'kill':
             this.renderer?.spawnSparks(ev.x, ev.y, ev.z, ev.isBoss ? 0xfacc15 : 0xfb7185, ev.isBoss ? 48 : 20, ev.isBoss ? 12 : 7);
@@ -331,6 +347,12 @@
         } else {
           pr.classList.add('hidden');
         }
+
+        const ret = $('trAimReticle');
+        if (ret) {
+          ret.classList.toggle('hidden', !s.aiming && s.adrenalineTimer <= 0);
+          ret.classList.toggle('adren', s.adrenalineTimer > 0);
+        }
       },
 
       sampleInput() {
@@ -384,6 +406,12 @@
         this.on($('trFloatInstinct'), 'click', toggleInst);
         this.on($('trBtnFlare'), 'click', trigFlare);
         this.on($('trFloatFlare'), 'click', trigFlare);
+        this.on($('trBtnQuality'), 'click', () => {
+          if (!this.renderer) return;
+          this.renderer.setQuality(!this.renderer.aaaQuality);
+          this.syncButtons();
+          ctx.toast(this.renderer.aaaQuality ? '✨ 已开启 3A 极致 PBR 光影 + 软阴影 + HDR 泛光' : '⚡ 已切换至高性能流畅模式');
+        });
         this.on($('trBtnRestart'), 'click', () => this.startLevel(this.levelIdx));
         this.on($('trFloatRestart'), 'click', () => this.startLevel(this.levelIdx));
         this.on($('trBtnTouch'), 'click', () => {
